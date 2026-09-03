@@ -255,6 +255,62 @@
     }
   }
 
+  // --------------------------------------------------------- status badges
+
+  /*
+   * A document status read as a coloured badge rather than as a word in a column of words, which
+   * is how the React client shows it. Two things make that safe to do generically.
+   *
+   * The first is that this applies to the document status and to nothing else. Ten columns in the
+   * dictionary are named Document Status and they use two references between them, whose values
+   * overlap almost entirely - the map below is the union of both. Twenty-two further columns are
+   * named merely Status, over ten unrelated references: a period is O, C or P, an alert is a
+   * different set again, and colouring those from this map would state something false in a
+   * confident colour. So the grid asks for a badge by property name, and that name is
+   * documentStatus.
+   *
+   * The second is that a tone is not a colour. Five tones, each one a token pair, and the same
+   * five the order board uses for its columns - a status that is blue on the board cannot be green
+   * in the grid behind it. Booked is the working state and takes the primary tone; closed is the
+   * finished one and takes the success tone, which is why green is not on the active document.
+   * Anything the map does not know is neutral, because an unknown status must read as unknown and
+   * not as fine.
+   */
+  var STATUS_TONES = {
+    // Not started, or not a state anybody acts on.
+    'DR': 'neutral', 'TMP': 'neutral', 'TEMP': 'neutral', 'IN': 'neutral', 'CH': 'neutral',
+    'PR': 'neutral', 'NC': 'neutral', '??': 'neutral', 'XX': 'neutral',
+    // Under way: booked, posted, transferred, being evaluated.
+    'CO': 'active', 'IP': 'active', 'PO': 'active', 'TR': 'active', 'AP': 'active',
+    'UE': 'active', 'ME': 'active', 'AE': 'active',
+    // Finished.
+    'CL': 'done', 'CA': 'done',
+    // Wants attention but is not a failure.
+    'RE': 'warn', 'WP': 'warn',
+    // Voided, rejected, refused or in error.
+    'VO': 'bad', 'NA': 'bad', 'CJ': 'bad', 'PE': 'bad', 'TE': 'bad'
+  };
+
+  function escaped(value) {
+    return String(value === null || value === undefined ? '' : value)
+      .split('&').join('&amp;')
+      .split('<').join('&lt;')
+      .split('>').join('&gt;')
+      .split('"').join('&quot;');
+  }
+
+  /*
+   * The label is plain text and is escaped here, so a caller never has to think about it and can
+   * never hand markup through by accident. Callers pass the value's own translated name - the one
+   * out of the field's value map or off the record - not a rendered cell.
+   */
+  function statusBadge(value, label) {
+    var key = value === null || value === undefined ? '' : String(value);
+    var tone = STATUS_TONES[key] || 'neutral';
+    return '<span class="etskin-status etskin-status-' + tone + '" title="' + escaped(label) +
+      '">' + escaped(label) + '</span>';
+  }
+
   // ------------------------------------------------------ SmartClient sizes
 
   // A large part of the stock look lives in JS class properties rather than CSS: row heights,
@@ -331,7 +387,7 @@
       applyTokens(tokens);
       applySmartClient(tokens);
       if (typeof OB !== 'undefined' && OB) {
-        OB.ETSkin = { tokens: tokens };
+        OB.ETSkin = { tokens: tokens, statusBadge: statusBadge };
       }
     }
   } catch (e) {

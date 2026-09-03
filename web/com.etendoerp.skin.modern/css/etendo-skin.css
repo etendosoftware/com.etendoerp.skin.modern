@@ -2984,6 +2984,76 @@
   color: var(--sk-on-primary);
 }
 
+/* ------------------------------------------------------------ status badge */
+
+/*
+ * The document status, wherever it is shown: a grid cell, a card on the order board. Five tones,
+ * one rule each, and the tone is decided in JavaScript from the status value - see STATUS_TONES in
+ * etendo-skin.js for which value takes which tone and why.
+ *
+ * The badge is sized to sit inside a 38px grid row without changing it, and it is allowed to
+ * ellipsize rather than to widen its column: Closed - Order Created is a long name and a status
+ * column that grew to fit it would take the room from the columns that carry the document.
+ */
+.etskin-on .etskin-status {
+  display: inline-block;
+  max-width: 100%;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 15px;
+  letter-spacing: 0.01em;
+  vertical-align: middle;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border: 1px solid transparent;
+  border-radius: 999px;
+}
+
+/* Not started, or not a state anybody acts on. */
+.etskin-on .etskin-status-neutral {
+  color: var(--sk-text-muted);
+  background-color: var(--sk-neutral-soft);
+  border-color: var(--sk-border);
+}
+
+/* Under way. The working state is the primary tone rather than green, so that green is left to
+   mean finished and the two cannot be confused down a column. */
+.etskin-on .etskin-status-active {
+  color: var(--sk-primary);
+  background-color: var(--sk-primary-soft);
+  border-color: color-mix(in srgb, var(--sk-primary) 30%, transparent);
+}
+
+/* Finished. */
+.etskin-on .etskin-status-done {
+  color: var(--sk-success);
+  background-color: color-mix(in srgb, var(--sk-success) 12%, var(--sk-surface));
+  border-color: color-mix(in srgb, var(--sk-success) 32%, transparent);
+}
+
+/* Wants attention but is not a failure. */
+.etskin-on .etskin-status-warn {
+  color: var(--sk-warning);
+  background-color: color-mix(in srgb, var(--sk-warning) 14%, var(--sk-surface));
+  border-color: color-mix(in srgb, var(--sk-warning) 34%, transparent);
+}
+
+/* Voided, rejected, refused or in error. */
+.etskin-on .etskin-status-bad {
+  color: var(--sk-danger);
+  background-color: color-mix(in srgb, var(--sk-danger) 11%, var(--sk-surface));
+  border-color: color-mix(in srgb, var(--sk-danger) 32%, transparent);
+}
+
+/* A selected grid row inverts its own text colour, and a badge inside it must not be left reading
+   its tone against the selection fill. */
+.etskin-on .OBGridRowSelected .etskin-status,
+.etskin-on .OBGridRowSelectedOver .etskin-status {
+  background-color: var(--sk-surface);
+}
+
 /* ------------------------------------------------------------ point of sale */
 
 /*
@@ -3963,12 +4033,19 @@
 }
 
 .etskin-on .etskin-kb-move {
+  display: flex;
+  align-items: center;
+  gap: 5px;
   margin-block-start: 6px;
-  padding-block-start: 5px;
+  padding-block-start: 6px;
   font-size: 11px;
   font-weight: 600;
   color: var(--sk-warning);
   border-block-start: 1px dashed color-mix(in srgb, var(--sk-warning) 45%, var(--sk-border));
+}
+
+.etskin-on .etskin-kb-move-arrow {
+  color: var(--sk-text-faint);
 }
 
 /* The card in the air. Fixed to the viewport because it is positioned from clientX and clientY,
