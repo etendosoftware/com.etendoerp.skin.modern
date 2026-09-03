@@ -111,6 +111,8 @@
   --sk-text-faint: color-mix(in srgb, var(--sk-text) 40%, transparent);
   --sk-border: color-mix(in srgb, var(--sk-text) 14%, transparent);
   --sk-border-strong: color-mix(in srgb, var(--sk-text) 24%, transparent);
+  /* Fields are filled rather than boxed, so the fill has to be a token like every other colour. */
+  --sk-field-fill: color-mix(in srgb, var(--sk-text) 3%, var(--sk-surface));
   --sk-primary-hover: color-mix(in srgb, var(--sk-primary) 86%, black);
   --sk-primary-soft: color-mix(in srgb, var(--sk-primary) 10%, var(--sk-surface));
   --sk-primary-softer: color-mix(in srgb, var(--sk-primary) 5%, var(--sk-surface));
@@ -739,6 +741,57 @@
   color: var(--sk-text-muted);
 }
 
+/*
+ * etendo-skin-form.js drops the <b> the framework wrapped every title in, but personalisation
+ * dialogs and parameter windows build their own titles and still send one through.
+ */
+.etskin-on [class^="OBFormFieldLabel"] b {
+  font-weight: inherit;
+}
+
+/*
+ * The required marker. Stock appends a bare "*" inside the bold title, which reads as punctuation;
+ * wrapped and coloured it reads as a rule. etendo-skin-form.js is what wraps it.
+ */
+.etskin-on .etskin-required {
+  color: var(--sk-danger);
+  font-weight: 600;
+  margin-inline-start: 1px;
+}
+
+/*
+ * The "open in new tab" arrow sat on every foreign key field at full strength, so a row of four
+ * fields carried four arrows competing with the values. It stays laid out - nothing shifts when it
+ * appears - and comes back the moment the field is under the pointer or holds focus.
+ */
+.etskin-on .etskin-linkglyph {
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.etskin-on td[class^="OBFormField"]:hover .etskin-linkglyph,
+.etskin-on [class^="OBFormFieldLabel"]:hover .etskin-linkglyph,
+.etskin-on td[class^="OBFormField"]:focus-within .etskin-linkglyph {
+  opacity: 1;
+}
+
+/*
+ * A selector field ships two trigger buttons side by side: the caret that drops the inline list and
+ * the magnifier that opens the full search window. Both are needed, but two buttons on one field
+ * read as clutter multiplied by every foreign key on the form. The caret stays as the resting
+ * affordance because it is the one reached for; the magnifier follows the same rule as the link
+ * arrow - laid out, so nothing shifts, and painted the moment the field is touched.
+ */
+.etskin-on img[src*="search_picker"] {
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.etskin-on td[class^="OBFormField"]:hover img[src*="search_picker"],
+.etskin-on td[class^="OBFormField"]:focus-within img[src*="search_picker"] {
+  opacity: 1;
+}
+
 .etskin-on [class^="OBFormFieldLabel"][class*="Error"] {
   color: var(--sk-danger);
 }
@@ -755,11 +808,14 @@
   font-family: var(--sk-font);
   font-size: 13px;
   color: var(--sk-text);
-  background-color: var(--sk-surface);
-  border: 1px solid var(--sk-border);
-  border-radius: var(--sk-radius-sm);
+  background-color: var(--sk-field-fill);
+  border: 0;
+  border-bottom: 1px solid var(--sk-border-strong);
+  border-radius: var(--sk-radius-sm) var(--sk-radius-sm) 0 0;
+  box-sizing: border-box;
+  min-height: var(--sk-field-height);
   padding: 4px 10px;
-  transition: border-color 120ms ease, box-shadow 120ms ease;
+  transition: background-color 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
 }
 
 /*
@@ -769,7 +825,7 @@
  */
 .etskin-on .OBFormFieldInput_HeightHack {
   height: auto !important;
-  min-height: calc(var(--sk-field-height) - 2px) !important;
+  min-height: var(--sk-field-height) !important;
 }
 
 .etskin-on [class^="OBFormFieldInput"][class*="Focused"],
@@ -780,25 +836,30 @@
 .etskin-on [class^="OBFormFieldSelectInput"]:focus,
 .etskin-on [class^="OBFormFieldDateInput"]:focus,
 .etskin-on [class^="OBFormFieldNumberInput"]:focus {
-  border-color: var(--sk-primary);
-  box-shadow: 0 0 0 3px var(--sk-focus-ring);
+  background-color: var(--sk-surface);
+  border-bottom-color: var(--sk-primary);
+  box-shadow: inset 0 -1px 0 var(--sk-primary);
   outline: none;
 }
 
-/* Required fields: a left accent bar instead of the stock full yellow fill. */
+/*
+ * Required fields used to carry a 3px navy bar down their left edge, which boxed the field and put
+ * a second mark on something the red asterisk in the label already says. The field itself now says
+ * nothing; the marker is in the label, where the eye reads the question rather than the answer.
+ */
 .etskin-on [class^="OBFormFieldInput"][class*="Required"],
 .etskin-on [class^="OBFormFieldSelectInput"][class*="Required"],
 .etskin-on [class^="OBFormFieldDateInput"][class*="Required"],
 .etskin-on [class^="OBFormFieldNumberInput"][class*="Required"] {
-  background-color: var(--sk-surface);
-  border-inline-start: 3px solid var(--sk-accent);
+  background-color: var(--sk-field-fill);
 }
 
 .etskin-on [class^="OBFormFieldInput"][class*="Error"],
 .etskin-on [class^="OBFormFieldSelectInput"][class*="Error"],
 .etskin-on [class^="OBFormFieldDateInput"][class*="Error"],
 .etskin-on [class^="OBFormFieldNumberInput"][class*="Error"] {
-  border-color: var(--sk-danger);
+  border-bottom-color: var(--sk-danger);
+  box-shadow: inset 0 -1px 0 var(--sk-danger);
   color: var(--sk-text);
 }
 
@@ -806,8 +867,9 @@
 .etskin-on [class^="OBFormFieldSelectInput"][class*="Disabled"],
 .etskin-on [class^="OBFormFieldDateInput"][class*="Disabled"],
 .etskin-on [class^="OBFormFieldNumberInput"][class*="Disabled"] {
-  background-color: color-mix(in srgb, var(--sk-text) 4%, transparent);
-  border-color: transparent;
+  background-color: transparent;
+  border-bottom-color: var(--sk-border);
+  border-bottom-style: dashed;
   color: var(--sk-text-muted);
   -webkit-text-fill-color: var(--sk-text-muted);
 }

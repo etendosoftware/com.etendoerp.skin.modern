@@ -299,13 +299,47 @@ async function etskinCapture(screen) {
      */
     var DECORATION = 'img[src*="ico-to-new-tab"], .OBFormFieldSelectPickerIcon, .OBFormFieldPickerIcon,'
       + ' [class*="PickerIcon"], .OBFormFieldComboBoxIcon, img[src*="picker"]';
+    /*
+     * Corrected 2026-09-03. This asked closest('tr') for the field, but a DynamicForm row is a <tr>
+     * holding all four columns, so it counted a whole row of fields and reported four or five where
+     * each field carried one. The field is the cell of the outermost row that contains the input;
+     * for a foreign key the input sits in a nested table, so the walk climbs until it finds a cell
+     * the form itself styled as a field. before-*.json was re-recorded with this version.
+     */
+    function fieldCell(el) {
+      var row = el.closest('tr');
+      while (row) {
+        var kids = row.children;
+        for (var k = 0; k < kids.length; k++) {
+          if (kids[k].contains(el) && /^OBFormField/.test(kids[k].className || '')) { return kids[k]; }
+        }
+        row = row.parentElement ? row.parentElement.closest('tr') : null;
+      }
+      return el.parentElement;
+    }
+
+    /*
+     * Two rules keep this counting controls rather than nodes.
+     *
+     * A picker is a <td> wrapping an <img>; both match DECORATION, so an element that contains
+     * another match is dropped and only the innermost node of each control is counted.
+     *
+     * "At rest" is the criterion, and the field the browser has focused is not at rest: affordances
+     * that are meant to appear on interaction are showing there precisely because the skin works.
+     * That field is left out rather than blurred, because blurring a SmartClient item fires its
+     * change handling and would alter the page the recording is meant to observe. The resting
+     * visibility of the link arrow is not lost - linkGlyphOpacity below records it directly.
+     */
     var decorations = inputs.slice(0, 16).map(function (el) {
-      var row = el.closest('tr') || el.closest('td') || el.parentElement;
-      if (!row) { return 0; }
-      return all(DECORATION, row).filter(function (d) {
+      var cell = fieldCell(el);
+      if (!cell || (document.activeElement && cell.contains(document.activeElement))) { return null; }
+      var found = all(DECORATION, cell).filter(function (d) {
         return visible(d) && Number(getComputedStyle(d).opacity) > 0.05;
+      });
+      return found.filter(function (d) {
+        return !found.some(function (other) { return other !== d && d.contains(other); });
       }).length;
-    });
+    }).filter(function (n) { return n !== null; });
     /*
      * Stock markup puts the asterisk inside the bold label text, so there is nothing to colour. A
      * marker only exists once the skin has wrapped it, which is exactly what the criterion asks
