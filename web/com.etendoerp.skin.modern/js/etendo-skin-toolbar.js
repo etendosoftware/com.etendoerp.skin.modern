@@ -60,6 +60,8 @@
   var DIVIDER = 13;
   // Wide enough for the word plus the chevron the stylesheet draws after it.
   var ACTIONS_WIDTH = 96;
+  // "more than 100 records" is the longest string the readout ever holds.
+  var COUNT_WIDTH = 148;
 
   var GROUPS = [
     { name: 'create', types: ['newDoc', 'newRow'] },
@@ -250,6 +252,27 @@
     return button;
   }
 
+  /*
+   * The grid's record count used to live in the filter row of the edit-link column, as a bare
+   * number under a blank header. That column is gone, and the number comes back here with a word
+   * attached. It is a plain Label rather than a button so it is never mistaken for one, and it is
+   * left unmarked so the toolbar measurements keep counting only controls.
+   *
+   * Written by etendo-skin-grid.js, which reaches it through toolbar.etskinCount.
+   */
+  function countReadout() {
+    return isc.Label.create({
+      autoDraw: false,
+      width: COUNT_WIDTH,
+      height: ICON,
+      align: 'right',
+      valign: 'center',
+      wrap: false,
+      styleName: 'etskin-tb-count',
+      contents: ''
+    });
+  }
+
   function actionsButton(toolbar) {
     return isc.OBToolbarIconButton.create({
       autoDraw: false,
@@ -361,6 +384,9 @@
       mark(button, 'more', 'etskin-tb-overflow', ICON);
       left.push(button);
     }
+
+    toolbar.etskinCount = countReadout();
+    right.push(toolbar.etskinCount);
 
     button = actionsButton(toolbar);
     mark(button, 'actions', 'etskin-tb-actions', ACTIONS_WIDTH);

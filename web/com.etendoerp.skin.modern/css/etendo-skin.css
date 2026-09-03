@@ -111,6 +111,9 @@
   --sk-text-faint: color-mix(in srgb, var(--sk-text) 40%, transparent);
   --sk-border: color-mix(in srgb, var(--sk-text) 14%, transparent);
   --sk-border-strong: color-mix(in srgb, var(--sk-text) 24%, transparent);
+  /* The rule between two rows of data is read as texture, not as a border; the chrome around a
+     control is read as a border. They cannot be the same weight. */
+  --sk-border-hairline: color-mix(in srgb, var(--sk-text) 7%, transparent);
   /* Fields are filled rather than boxed, so the fill has to be a token like every other colour. */
   --sk-field-fill: color-mix(in srgb, var(--sk-text) 3%, var(--sk-surface));
   --sk-primary-hover: color-mix(in srgb, var(--sk-primary) 86%, black);
@@ -237,7 +240,7 @@
   color: var(--sk-text);
   border-width: 0 0 1px 0;
   border-style: solid;
-  border-color: var(--sk-border);
+  border-color: var(--sk-border-hairline);
   padding: 0 10px;
   vertical-align: middle;
 }
@@ -295,13 +298,31 @@
 .etskin-on [class^="OBGridHeaderCellTitle"] {
   font-family: var(--sk-font);
   font-size: 12.5px;
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: 0;
   text-transform: none;
-  color: var(--sk-text);
+  color: var(--sk-text-muted);
   background: none;
   border-width: 0;
   padding: 0 10px;
+}
+
+/*
+ * Stock centres every header over columns whose data is flush left or flush right, so the label and
+ * the value it names never share an edge. SmartClient already writes the column's alignment onto
+ * the title cell as an attribute and then overrides it in the skin's stylesheet; honouring the
+ * attribute is the whole fix.
+ */
+.etskin-on [class^="OBGridHeaderCellTitle"][align="left"] {
+  text-align: left;
+}
+
+.etskin-on [class^="OBGridHeaderCellTitle"][align="right"] {
+  text-align: right;
+}
+
+.etskin-on [class^="OBGridHeaderCellTitle"][align="center"] {
+  text-align: center;
 }
 
 .etskin-on [class^="OBGridFilter"] input,
@@ -1322,7 +1343,29 @@
 .etskin-on [class^="OBMessageBar"] em,
 .etskin-on [class^="OBMessageBar"] strong {
   font-style: normal;
-  font-weight: 600;
+  font-weight: 400;
+}
+
+/*
+ * The transactional filter notice is the one message bar that is always there rather than a reply
+ * to something the user did, and it was two bold lines across the full width of the view. It stays
+ * as one quiet line: the band tells you it is a notice, the filter button carries a dot, and the
+ * sentence explains it once.
+ */
+.etskin-on [class^="OBMessageBar"] {
+  padding-block: 0;
+}
+
+.etskin-on [class^="OBMessageBarDescriptionText"],
+.etskin-on [class^="OBMessageBarLeftMsgContainer"],
+.etskin-on [class^="OBMessageBarRightMsgContainer"],
+.etskin-on [class^="OBMessageBarLeftMsgText"],
+.etskin-on [class^="OBMessageBarRightMsgText"] {
+  font-weight: 400;
+  line-height: 26px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .etskin-on [class^="OBMessageBar"] img[src*="mainIcon"] {
@@ -2107,6 +2150,28 @@
  * bookmark drawn in its place, so the three view controls read as one set. The title survives as
  * the tooltip, set alongside the class in etendo-skin-toolbar.js.
  */
+/*
+ * A filter that is on is a state, and a state belongs on the control that owns it. The dot sits on
+ * the funnel instead of a sentence sitting across the top of the view, and it is 8px because it has
+ * one thing to say.
+ */
+.etskin-on .etskin-toolbar-filtered {
+  position: relative;
+}
+
+.etskin-on .etskin-toolbar-filtered::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  inset-inline-end: 3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background-color: var(--sk-primary);
+  box-shadow: 0 0 0 2px var(--sk-surface);
+  pointer-events: none;
+}
+
 .etskin-on .etskin-tb-saveview,
 .etskin-on .etskin-tb-saveview td,
 .etskin-on .etskin-tb-saveview div {
@@ -2197,6 +2262,19 @@
   border-block-end: 1.5px solid var(--sk-text-muted);
   transform: rotate(45deg);
   pointer-events: none;
+}
+
+/*
+ * The record count, back from the blank column it used to sit in. Muted and unboxed: it is a
+ * readout, and nothing on the strip should invite a click except the things that take one.
+ */
+.etskin-on .etskin-tb-count {
+  font-family: var(--sk-font);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--sk-text-muted);
+  white-space: nowrap;
+  padding-inline-end: 12px;
 }
 
 /* ---------------------------------------------------------- toolbar menus */
