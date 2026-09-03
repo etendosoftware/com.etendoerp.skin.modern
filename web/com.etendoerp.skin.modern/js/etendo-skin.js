@@ -30,14 +30,33 @@
   // ---------------------------------------------------------------- presets
 
   // Every preset is a complete token set. A preference only needs to carry the keys it wants to
-  // override; anything missing falls back to the preset, and the preset falls back to 'indigo'.
+  // override; anything missing falls back to the preset, and an unknown preset name falls back to
+  // 'etendoNext'.
   var PRESETS = {
+    // Etendo's own next generation look, restated for Classic: a periwinkle desk with the windows
+    // as white sheets laid on it, a near black primary action and the familiar yellow kept for the
+    // focus marker. This is the default.
+    etendoNext: {
+      primary: '#2563eb',
+      accent: '#1e293b',
+      marker: '#f5c518',
+      danger: '#dc2626',
+      surface: '#ffffff',
+      canvas: '#c6d3ff',
+      canvasTint: '#f5f6fa',
+      text: '#101828',
+      radius: '8px',
+      density: 'comfortable'
+    },
+
     indigo: {
       primary: '#4f46e5',
       accent: '#f59e0b',
+      marker: '#f59e0b',
       danger: '#dc2626',
       surface: '#ffffff',
-      canvas: '#f7f8fa',
+      canvas: '#eef0f6',
+      canvasTint: '#f7f8fa',
       text: '#1a1d29',
       radius: '8px',
       density: 'comfortable'
@@ -48,9 +67,11 @@
     etendo: {
       primary: '#202452',
       accent: '#fad614',
+      marker: '#fad614',
       danger: '#dc2626',
       surface: '#ffffff',
-      canvas: '#f4f5f9',
+      canvas: '#e7e9f6',
+      canvasTint: '#f4f5f9',
       text: '#1a1d29',
       radius: '7px',
       density: 'comfortable'
@@ -59,9 +80,11 @@
     slate: {
       primary: '#334155',
       accent: '#0ea5e9',
+      marker: '#0ea5e9',
       danger: '#dc2626',
       surface: '#ffffff',
-      canvas: '#f8fafc',
+      canvas: '#e8edf3',
+      canvasTint: '#f8fafc',
       text: '#0f172a',
       radius: '6px',
       density: 'compact'
@@ -70,9 +93,11 @@
     emerald: {
       primary: '#047857',
       accent: '#f59e0b',
+      marker: '#f59e0b',
       danger: '#dc2626',
       surface: '#ffffff',
-      canvas: '#f6f9f7',
+      canvas: '#d9ece4',
+      canvasTint: '#f6f9f7',
       text: '#14211c',
       radius: '10px',
       density: 'comfortable'
@@ -129,7 +154,7 @@
 
   function resolveTokens() {
     var overrides = themeOverrides();
-    var preset = PRESETS[overrides.preset] || PRESETS.indigo;
+    var preset = PRESETS[overrides.preset] || PRESETS.etendoNext;
     var tokens = {};
     var key;
 
@@ -208,8 +233,10 @@
     set('primary', tokens.primary);
     set('accent', tokens.accent);
     set('danger', tokens.danger);
+    set('marker', tokens.marker);
     set('surface', tokens.surface);
     set('canvas', tokens.canvas);
+    set('canvas-tint', tokens.canvasTint);
     set('text', tokens.text);
     set('radius', tokens.radius);
     set('font', tokens.font);
