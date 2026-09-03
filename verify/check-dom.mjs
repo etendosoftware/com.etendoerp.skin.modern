@@ -238,6 +238,20 @@ for (const screen of ['grid', 'form']) {
   check(`${screen}: top-bar height`, t.height <= T.F7.maxTopBarHeight, `${t.height}px (max ${T.F7.maxTopBarHeight})`);
   const logo = t.imageHeights && t.imageHeights.length ? Math.max(...t.imageHeights) : (t.logoHeight || 0);
   check(`${screen}: logo height`, logo <= T.F7.maxLogoHeight, `${logo}px (max ${T.F7.maxLogoHeight})`);
+  /*
+   * A logo of the right height can still be in the wrong place. Both of these came out of a defect
+   * the height check could not see: the marks were hanging ten pixels above the top of the page.
+   */
+  const marks = t.marks || [];
+  const clipped = marks.filter((m) => !t.box || m.top < t.box.top || m.bottom > t.box.bottom);
+  check(`${screen}: brand marks are inside the bar`, marks.length > 0 && clipped.length === 0,
+    marks.length === 0 ? 'no brand mark found on the bar'
+      : `${clipped.length} of ${marks.length} cross an edge (bar ${t.box.top}-${t.box.bottom}, marks ${marks.map((m) => `${m.top}-${m.bottom}`).join(', ')})`);
+  const drift = marks.map((m) => Math.abs(m.mid - t.clusterMid));
+  const worst = drift.length ? Math.max(...drift) : null;
+  check(`${screen}: brand marks share the cluster's axis`,
+    t.clusterMid !== null && worst !== null && worst <= T.F7.maxBrandAxisDrift,
+    worst === null ? 'nothing to compare' : `worst drift ${worst}px from the cluster axis at ${t.clusterMid} (max ${T.F7.maxBrandAxisDrift})`);
 }
 {
   const sb = rec.form.statusBar;

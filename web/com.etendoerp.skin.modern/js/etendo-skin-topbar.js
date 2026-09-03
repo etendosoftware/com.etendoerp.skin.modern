@@ -42,7 +42,22 @@
   // 40x40 buttons on a 44px pitch.
   var BUTTON = 40;
   var GAP = 4;
+  /*
+   * The tray's own padding, which has to match the padding the stylesheet gives .OBNavBarToolStrip:
+   * a ToolStrip is paddingAsLayoutMargin, so its CSS padding is its layout margin and the height it
+   * needs is the button plus that padding twice. A 46px tray under 4px margins is a 54px bar.
+   */
+  var TRAY_PAD = 3;
+  // Between two buttons in the tray. Four read as one block of chrome; six read as separate controls.
+  var TRAY_GAP = 6;
   var BASE_STYLE = 'OBNavBarComponent';
+  /*
+   * A tray member narrower than this cannot be clicked, so it is not a control: it is a component
+   * that measured itself at nothing. The SmartClient debug menu does exactly that - it draws one
+   * pixel wide - and stretched to the tray's height it became a hairline inside the pill that no
+   * gesture could reach and that still counted as one of the shapes up there.
+   */
+  var USABLE = 16;
   // Every marker starts with this, which is what lets a repeat setStyleName strip the old one.
   var MARKER = 'etskin-tray-';
 
@@ -189,6 +204,19 @@
     return !!role || style === 'OBNavBarCreateNew' || style === 'OBQuickLaunch';
   }
 
+  /*
+   * The global "create new" launcher is the one control left out of the tray.
+   *
+   * It opens a list of windows to create a record in, and every window on that list is one keystroke
+   * away in the navigation panel, where the same list is already a tree with a filter box over it.
+   * What it cost was a chip that looks exactly like the New button on the window toolbar under it
+   * and does something else - two plus signs, one screen. Etendo's React skin ships no global one
+   * either; its tray is four buttons. A deployment that wants it back sets OB.ETSkin.trayCreateNew.
+   */
+  function dropped(inner) {
+    return !OB.ETSkin.trayCreateNew && inner.styleName === 'OBNavBarCreateNew';
+  }
+
   function dressMember(wrapper) {
     var inner = wrapper.getMembers ? wrapper.getMembers()[0] : null;
     var role;
@@ -197,6 +225,11 @@
     // alone: keepMarked and trackAlerts both wrap a method, and wrapping one twice would double
     // every call it makes.
     if (!inner || wrapper.etskinMarker) {
+      return;
+    }
+
+    if (dropped(inner)) {
+      wrapper.hide();
       return;
     }
 
@@ -227,12 +260,35 @@
     }
   }
 
+  /*
+   * Run after the members have drawn rather than as they are dressed, because a component's width
+   * is whatever it measured itself at and it has not measured anything yet at the moment it joins
+   * the bar.
+   */
+  function pruneSlivers() {
+    var members = OB.NavBar.getMembers() || [];
+    var i, member;
+
+    for (i = 0; i < members.length; i++) {
+      member = members[i];
+      if (!member.etskinMarker || !member.isVisible || !member.isVisible()) {
+        continue;
+      }
+      if (member.getVisibleWidth && member.getVisibleWidth() < USABLE) {
+        member.hide();
+      }
+    }
+  }
+
   function dressButtons() {
     var members = OB.NavBar.getMembers() || [];
     var i;
 
     for (i = 0; i < members.length; i++) {
       dressMember(members[i]);
+    }
+    if (typeof setTimeout === 'function') {
+      setTimeout(pruneSlivers, 600);
     }
   }
 
@@ -258,15 +314,18 @@
     };
   }
 
+  /*
+   * The tray's margins are deliberately not set here. A ToolStrip carries paddingAsLayoutMargin, so
+   * it takes its inset from the padding on its style name - and a layoutTopMargin written in
+   * JavaScript overrides that inset without removing the padding the element still reserves, which
+   * is how the strip ended up 10px taller than the height it was given. The padding lives in the
+   * stylesheet, next to the pill it draws, and TRAY_PAD is this file's copy of that number.
+   */
   function dressTray() {
     var strip = OB.NavBar;
 
-    strip.layoutLeftMargin = GAP;
-    strip.layoutRightMargin = GAP;
-    strip.layoutTopMargin = GAP;
-    strip.layoutBottomMargin = GAP;
-    strip.membersMargin = GAP;
-    strip.setHeight(BUTTON + 2 * GAP);
+    strip.membersMargin = TRAY_GAP;
+    strip.setHeight(BUTTON + 2 * TRAY_PAD);
   }
 
   // ------------------------------------------------------------------ order
@@ -319,15 +378,27 @@
     top.setMembers(ordered);
   }
 
+  /*
+   * Stock is 4px above the row and 10 below it, which with a 50px tray comes to a 65px bar - and it
+   * is the bar every screen in the application starts under, so those are the most expensive pixels
+   * there are. An even 4 above and below a 46px tray is 54, inside the 56 the React skin uses.
+   *
+   * Both halves are needed. The four properties say what the margins are; setLayoutMargin is what
+   * makes the layout read them again, because a Layout resolves its margins once, while it is
+   * measuring itself, and a property written on a bar that is already drawn changes the object and
+   * not the screen. An earlier version of this function only assigned, and the bar stayed at 65
+   * through a reflow.
+   */
   function dressBar() {
     var top = OB.TopLayout;
 
-    // Stock is 4 + 40 + 10; the tray is 48 tall and the band around it is even. 56 is the height
-    // of the React skin's top bar.
     top.layoutTopMargin = GAP;
     top.layoutBottomMargin = GAP;
     top.layoutLeftMargin = 0;
     top.layoutRightMargin = 8;
+    if (top.setLayoutMargin) {
+      top.setLayoutMargin(GAP);
+    }
     if (top.setDefaultLayoutAlign) {
       top.setDefaultLayoutAlign('center');
     }
