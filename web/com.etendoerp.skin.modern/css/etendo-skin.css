@@ -2967,6 +2967,690 @@
   }
 }
 
+/*
+ * The embedded applications the skin adds are opened from the dashboard header, and they are not
+ * peers of Refresh: one opens a screen, the others operate the one that is already there.
+ */
+.etskin-on .etskin-dash-act-app {
+  background-color: var(--sk-primary);
+  border-color: var(--sk-primary);
+  color: var(--sk-on-primary);
+  margin-inline-end: 4px;
+}
+
+.etskin-on .etskin-dash-act-app:hover {
+  background-color: var(--sk-primary-hover);
+  border-color: var(--sk-primary-hover);
+  color: var(--sk-on-primary);
+}
+
+/* ------------------------------------------------------------ point of sale */
+
+/*
+ * A till is a two handed screen: the catalogue takes the room it can get and the ticket is a fixed
+ * column beside it, because the total has to be in the same place on every ticket. Both panes
+ * scroll on their own and the page itself never does - the payment buttons must not be able to
+ * scroll out of reach.
+ *
+ * The canvas is positioned absolutely by SmartClient, so the markup fills it with inset rather
+ * than with a height in percent, which is the one measurement a canvas of HTML contents does not
+ * reliably hand down.
+ */
+.etskin-on .etskin-pos {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--sk-font);
+  color: var(--sk-text);
+  background-color: var(--sk-canvas-tint);
+  -webkit-font-smoothing: antialiased;
+}
+
+.etskin-on .etskin-pos *,
+.etskin-on .etskin-pos *::before,
+.etskin-on .etskin-pos *::after {
+  box-sizing: border-box;
+}
+
+.etskin-on .etskin-pos button {
+  font-family: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.etskin-on .etskin-pos button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.etskin-on .etskin-pos button:focus-visible,
+.etskin-on .etskin-pos input:focus-visible {
+  outline: 2px solid var(--sk-focus-ring);
+  outline-offset: 1px;
+}
+
+/* The five categories are told apart by colour as well as by name, and one custom property per
+   category keeps that colour in one place: the chip, the tile border and the monogram all read it. */
+.etskin-on .etskin-pos-cat-1 { --pos-cat: #0284c7; }
+.etskin-on .etskin-pos-cat-2 { --pos-cat: #b45309; }
+.etskin-on .etskin-pos-cat-3 { --pos-cat: #7c3aed; }
+.etskin-on .etskin-pos-cat-4 { --pos-cat: #047857; }
+.etskin-on .etskin-pos-cat-5 { --pos-cat: #db2777; }
+
+/* ---- head */
+
+.etskin-on .etskin-pos-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 0 0 auto;
+  padding: 0 18px;
+  height: 54px;
+  background-color: var(--sk-surface);
+  border-bottom: 1px solid var(--sk-border);
+}
+
+.etskin-on .etskin-pos-id {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.etskin-on .etskin-pos-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/*
+ * The badge is not decoration. This screen reads nothing and writes nothing, and the only thing
+ * standing between that and a demonstration in which someone believes a sale was recorded is a
+ * label on the screen saying which it is.
+ */
+.etskin-on .etskin-pos-badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background-color: color-mix(in srgb, var(--sk-warning) 14%, var(--sk-surface));
+  color: var(--sk-warning);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.etskin-on .etskin-pos-meta {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--sk-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.etskin-on .etskin-pos-head-acts {
+  display: flex;
+  gap: 8px;
+}
+
+.etskin-on .etskin-pos-link {
+  padding: 4px 8px;
+  border: 0;
+  border-radius: var(--sk-radius-sm);
+  background-color: transparent;
+  color: var(--sk-primary);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.etskin-on .etskin-pos-link:hover {
+  background-color: var(--sk-primary-soft);
+}
+
+/* ---- body */
+
+.etskin-on .etskin-pos-body {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.etskin-on .etskin-pos-catalogue {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 14px 16px 16px;
+}
+
+.etskin-on .etskin-pos-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+  padding-bottom: 12px;
+}
+
+.etskin-on .etskin-pos-search {
+  position: relative;
+  flex: 0 0 240px;
+}
+
+.etskin-on .etskin-pos-search-input {
+  width: 100%;
+  height: 32px;
+  padding: 0 10px 0 30px;
+  border: 1px solid var(--sk-border);
+  border-radius: var(--sk-radius-sm);
+  background-color: var(--sk-surface);
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--sk-text);
+}
+
+.etskin-on .etskin-pos-search-icon {
+  position: absolute;
+  left: 9px;
+  top: 9px;
+  width: 14px;
+  height: 14px;
+  background-color: var(--sk-text-faint);
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: 14px 14px;
+  mask-size: 14px 14px;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14z M20 20l-4.3-4.3'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14z M20 20l-4.3-4.3'/%3E%3C/svg%3E");
+}
+
+.etskin-on .etskin-pos-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.etskin-on .etskin-pos-chip {
+  padding: 5px 11px;
+  border: 1px solid var(--sk-border);
+  border-radius: 999px;
+  background-color: var(--sk-surface);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--sk-text-muted);
+}
+
+.etskin-on .etskin-pos-chip:hover {
+  border-color: var(--sk-border-strong);
+  color: var(--sk-text);
+}
+
+.etskin-on .etskin-pos-chip-on {
+  border-color: transparent;
+  background-color: color-mix(in srgb, var(--pos-cat, var(--sk-primary)) 12%, var(--sk-surface));
+  color: var(--pos-cat, var(--sk-primary));
+}
+
+/* ---- tiles */
+
+/*
+ * auto-fill rather than a column count: the till is a tab in a window that can be any width, and
+ * the tiles have to reflow when the navigation panel opens without anything here knowing that it
+ * did.
+ */
+.etskin-on .etskin-pos-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(136px, 1fr));
+  gap: 10px;
+  align-content: start;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 2px;
+}
+
+.etskin-on .etskin-pos-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 96px;
+  padding: 10px 12px 11px;
+  border: 1px solid var(--sk-border);
+  border-radius: var(--sk-radius);
+  background-color: var(--sk-surface);
+  text-align: left;
+  transition: box-shadow 120ms ease, transform 120ms ease, border-color 120ms ease;
+}
+
+.etskin-on .etskin-pos-tile:hover {
+  border-color: color-mix(in srgb, var(--pos-cat) 40%, var(--sk-border));
+  box-shadow: var(--sk-shadow-sm);
+}
+
+.etskin-on .etskin-pos-tile:active {
+  transform: translateY(1px);
+}
+
+.etskin-on .etskin-pos-tile-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--sk-radius-sm);
+  background-color: color-mix(in srgb, var(--pos-cat) 12%, var(--sk-surface));
+  color: var(--pos-cat);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.etskin-on .etskin-pos-tile-name {
+  flex: 1 1 auto;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--sk-text);
+}
+
+.etskin-on .etskin-pos-tile-price {
+  font-size: 14px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.etskin-on .etskin-pos-empty {
+  margin: 0;
+  padding: 24px 4px;
+  color: var(--sk-text-faint);
+  font-size: 12px;
+}
+
+.etskin-on .etskin-pos-empty-ticket {
+  padding: 28px 16px;
+  text-align: center;
+}
+
+/* ---- ticket */
+
+.etskin-on .etskin-pos-ticket {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 372px;
+  min-height: 0;
+  background-color: var(--sk-surface);
+  border-inline-start: 1px solid var(--sk-border);
+}
+
+.etskin-on .etskin-pos-ticket-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--sk-border-hairline);
+}
+
+.etskin-on .etskin-pos-customer {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.etskin-on .etskin-pos-customer-name {
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.etskin-on .etskin-pos-customer-note {
+  font-size: 11px;
+  color: var(--sk-text-faint);
+}
+
+.etskin-on .etskin-pos-lines {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+.etskin-on .etskin-pos-line {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--sk-border-hairline);
+}
+
+.etskin-on .etskin-pos-line-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.etskin-on .etskin-pos-line-name {
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.etskin-on .etskin-pos-line-unit {
+  font-size: 11px;
+  color: var(--sk-text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.etskin-on .etskin-pos-step {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--sk-border);
+  border-radius: var(--sk-radius-sm);
+  overflow: hidden;
+}
+
+.etskin-on .etskin-pos-step-btn {
+  width: 24px;
+  height: 24px;
+  border: 0;
+  background-color: transparent;
+  font-size: 13px;
+  line-height: 1;
+  color: var(--sk-text-muted);
+}
+
+.etskin-on .etskin-pos-step-btn:hover {
+  background-color: var(--sk-neutral-soft);
+  color: var(--sk-text);
+}
+
+.etskin-on .etskin-pos-step-qty {
+  min-width: 26px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.etskin-on .etskin-pos-line-total {
+  min-width: 58px;
+  text-align: right;
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.etskin-on .etskin-pos-line-drop {
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: var(--sk-radius-sm);
+  background-color: transparent;
+  color: var(--sk-text-faint);
+  font-size: 14px;
+  line-height: 1;
+}
+
+.etskin-on .etskin-pos-line-drop:hover {
+  background-color: color-mix(in srgb, var(--sk-danger) 10%, transparent);
+  color: var(--sk-danger);
+}
+
+/* ---- totals and payment */
+
+.etskin-on .etskin-pos-sums {
+  flex: 0 0 auto;
+  padding: 12px 14px 10px;
+  border-top: 1px solid var(--sk-border);
+}
+
+.etskin-on .etskin-pos-sum {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 2px 0;
+  font-size: 12px;
+  color: var(--sk-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.etskin-on .etskin-pos-sum-total {
+  margin-top: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--sk-border-hairline);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--sk-text);
+}
+
+.etskin-on .etskin-pos-units {
+  display: block;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--sk-text-faint);
+}
+
+.etskin-on .etskin-pos-cur {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--sk-text-faint);
+  letter-spacing: 0.02em;
+}
+
+.etskin-on .etskin-pos-tender {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px 8px;
+}
+
+.etskin-on .etskin-pos-tender-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex: 1 1 auto;
+  font-size: 12px;
+  color: var(--sk-text-muted);
+}
+
+.etskin-on .etskin-pos-tender-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--sk-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.etskin-on .etskin-pos-short {
+  color: var(--sk-danger);
+}
+
+.etskin-on .etskin-pos-exact {
+  padding: 4px 9px;
+  border: 1px solid var(--sk-border);
+  border-radius: var(--sk-radius-sm);
+  background-color: var(--sk-surface);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--sk-text-muted);
+}
+
+.etskin-on .etskin-pos-exact:hover:not(:disabled) {
+  border-color: var(--sk-border-strong);
+  color: var(--sk-text);
+}
+
+/*
+ * The keypad reads digits as cents, the way a terminal does: 2 0 5 0 is 20.50, and there is no
+ * decimal key to press by mistake. It is on screen at all times rather than behind a payment
+ * dialog, because tendering is the one number a cashier types.
+ */
+.etskin-on .etskin-pos-pad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  padding: 0 14px 10px;
+}
+
+.etskin-on .etskin-pos-key {
+  height: 38px;
+  border: 1px solid var(--sk-border);
+  border-radius: var(--sk-radius-sm);
+  background-color: var(--sk-field-fill);
+  font-size: 14px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.etskin-on .etskin-pos-key:hover {
+  background-color: var(--sk-neutral-soft);
+}
+
+.etskin-on .etskin-pos-key:active {
+  background-color: var(--sk-primary-soft);
+  border-color: var(--sk-primary);
+}
+
+.etskin-on .etskin-pos-key-clear {
+  color: var(--sk-danger);
+}
+
+.etskin-on .etskin-pos-notice {
+  margin: 0;
+  padding: 0 14px 8px;
+  color: var(--sk-danger);
+  font-size: 11px;
+}
+
+.etskin-on .etskin-pos-pay {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 0 14px 14px;
+}
+
+.etskin-on .etskin-pos-btn {
+  height: 42px;
+  border: 1px solid transparent;
+  border-radius: var(--sk-radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.etskin-on .etskin-pos-btn-cash {
+  background-color: var(--sk-primary);
+  color: var(--sk-on-primary);
+}
+
+.etskin-on .etskin-pos-btn-cash:hover:not(:disabled) {
+  background-color: var(--sk-primary-hover);
+}
+
+.etskin-on .etskin-pos-btn-card {
+  background-color: var(--sk-surface);
+  border-color: var(--sk-border-strong);
+  color: var(--sk-text);
+}
+
+.etskin-on .etskin-pos-btn-card:hover:not(:disabled) {
+  background-color: var(--sk-neutral-soft);
+}
+
+/* ---- receipt */
+
+.etskin-on .etskin-pos-receipt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  flex: 1 1 auto;
+  padding: 34px 22px 22px;
+  text-align: center;
+}
+
+/* A tick drawn from two borders, so the confirmation costs no image and no icon font. */
+.etskin-on .etskin-pos-receipt-mark {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background-color: color-mix(in srgb, var(--sk-success) 12%, var(--sk-surface));
+  position: relative;
+}
+
+.etskin-on .etskin-pos-receipt-mark::after {
+  content: "";
+  position: absolute;
+  left: 16px;
+  top: 14px;
+  width: 13px;
+  height: 7px;
+  border-left: 2.5px solid var(--sk-success);
+  border-bottom: 2.5px solid var(--sk-success);
+  transform: rotate(-45deg);
+}
+
+.etskin-on .etskin-pos-receipt-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--sk-success);
+}
+
+.etskin-on .etskin-pos-receipt-sum {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.etskin-on .etskin-pos-receipt-list {
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 4px 18px;
+  margin: 6px 0 12px;
+  width: 100%;
+  max-width: 260px;
+  font-size: 12px;
+}
+
+.etskin-on .etskin-pos-receipt-list dt {
+  text-align: left;
+  color: var(--sk-text-muted);
+}
+
+.etskin-on .etskin-pos-receipt-list dd {
+  margin: 0;
+  text-align: right;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.etskin-on .etskin-pos-receipt .etskin-pos-btn {
+  width: 100%;
+  max-width: 260px;
+}
+
+.etskin-on .etskin-pos-receipt-note {
+  margin: 4px 0 0;
+  font-size: 11px;
+  color: var(--sk-text-faint);
+}
+
+/* The ticket column gives way first on a narrow window: a cramped catalogue is unusable, a
+   cramped ticket is merely tight. */
+@media (max-width: 1120px) {
+  .etskin-on .etskin-pos-ticket {
+    flex-basis: 320px;
+  }
+}
+
 /* ----------------------------------------------------------- accessibility */
 
 @media (prefers-reduced-motion: reduce) {
