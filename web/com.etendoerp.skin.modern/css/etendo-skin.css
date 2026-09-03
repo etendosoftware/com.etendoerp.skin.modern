@@ -1297,10 +1297,10 @@
   background-image: linear-gradient(90deg, transparent 0%, var(--sk-primary) 50%, transparent 100%);
   background-repeat: no-repeat;
   background-size: 45% 100%;
-  animation: etskin-boot-bar 1150ms ease-in-out infinite;
+  animation: etskin-loading-bar 1150ms ease-in-out infinite;
 }
 
-@keyframes etskin-boot-bar {
+@keyframes etskin-loading-bar {
   from {
     background-position: -60% 0;
   }
@@ -1310,8 +1310,67 @@
   }
 }
 
+/* ------------------------------------------------ in-application loading */
+
+/*
+ * The boot screen is not the only place the old loading art shows up. Opening a window, switching
+ * to a tab whose pane has not been built yet, the calendar and the branding widget all call
+ * OB.Utilities.createLoadingLayout, which lays a label next to
+ * OB.Styles.LoadingPrompt.loadingImage - the same 220x16 animated GIF index.jsp used. Deleting
+ * records calls isc.showPrompt with the same file. So the second half of the fix lives here.
+ *
+ * The image is replaced rather than hidden. A 1x1 transparent GIF in `content:` empties the
+ * element while leaving it a box we can paint, and the bar is then the boot bar's own declarations
+ * on that box. Hiding the img instead would take its background with it, and removing it in JS
+ * would mean overriding a core function that another module (com.smf.smartclient.boostedui) also
+ * overrides.
+ *
+ * Matching on the file name rather than on a class is deliberate: the img carries no class of its
+ * own, and this way the rule holds for both call sites and for anything else that reuses
+ * OB.Styles.LoadingPrompt.loadingImage.
+ *
+ * The base64 payload is safe to send through the CSS pipeline: it has no ")" to cut the rewriter's
+ * url() scan short, and no "." so the data-uri pass reads its extension as the whole string, fails
+ * the jpg/png/gif test and leaves the declaration alone.
+ */
+.etskin-on img[src$="windowLoading.gif"] {
+  content: url(data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7);
+  /* SmartClient has already measured the 220x16 wrapper this sits in and positioned it absolutely.
+     A relative offset re-centres the smaller bar inside that box without moving the box. */
+  position: relative;
+  top: 6px;
+  left: 6px;
+  width: 208px;
+  height: 3px;
+  border-radius: 999px;
+  background-color: color-mix(in srgb, var(--sk-primary) 15%, transparent);
+  background-image: linear-gradient(90deg, transparent 0%, var(--sk-primary) 50%, transparent 100%);
+  background-repeat: no-repeat;
+  background-size: 45% 100%;
+  animation: etskin-loading-bar 1150ms ease-in-out infinite;
+}
+
+/* Stock is a flat #ffffff; tokenised so a themed surface takes the loading pane with it. */
+.etskin-on .OBLoadingPromptModalMask {
+  background-color: var(--sk-surface);
+}
+
+/*
+ * Unlike the boot screen's hardcoded "LOADING...", this label is OBUIAPP_LOADING and is
+ * translated, so it is worth keeping - it is the only thing here a screen reader can read. It just
+ * stops looking like a heading.
+ */
+.etskin-on .OBLoadingPromptLabel {
+  font-family: var(--sk-font);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: var(--sk-text-faint);
+}
+
 @media (prefers-reduced-motion: reduce) {
-  #OBLoadingDiv .OBCenteredBox::after {
+  #OBLoadingDiv .OBCenteredBox::after,
+  .etskin-on img[src$="windowLoading.gif"] {
     animation: none;
     background-image: none;
     background-color: color-mix(in srgb, var(--sk-primary) 40%, transparent);
