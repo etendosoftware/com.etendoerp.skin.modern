@@ -409,6 +409,19 @@
     return '<span class="etskin-dash-skel"></span>';
   }
 
+  /*
+   * The embedded applications the skin adds - the till so far - are reached from here, because the
+   * home screen is the one place every session starts. The button is emitted only if the script
+   * that answers for it is in the bundle, so a partial install shows no dead control.
+   */
+  function appHtml() {
+    if (!OB.ETSkin || !OB.ETSkin.openPOS) {
+      return '';
+    }
+    return '<button type="button" class="etskin-dash-act etskin-dash-act-app" data-act="pos">' +
+      esc(skinLabel('posTitle', 'Point of Sale')) + '</button>';
+  }
+
   function headHtml() {
     var name = OB.User.firstName || OB.User.name || '';
     var meta = [OB.User.clientName, OB.User.organizationName,
@@ -428,6 +441,7 @@
       '<div class="etskin-dash-meta">' + parts.join(' &middot; ') + '</div>' +
       '</div>' +
       '<div class="etskin-dash-acts">' +
+      appHtml() +
       '<button type="button" class="etskin-dash-act" data-act="refresh">' +
       esc(label('OBKMO_WMO_Refresh', 'Refresh')) + '</button>' +
       '<button type="button" class="etskin-dash-act" data-act="add">' +
@@ -771,6 +785,11 @@
         return;
       case 'manage':
         toggleSide();
+        return;
+      case 'pos':
+        if (OB.ETSkin && OB.ETSkin.openPOS) {
+          OB.ETSkin.openPOS();
+        }
         return;
       case 'open':
         openWindow(action);
