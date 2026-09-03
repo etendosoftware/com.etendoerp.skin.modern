@@ -105,9 +105,9 @@
   };
 
   var DENSITIES = {
-    compact: { cellHeight: 28, fieldHeight: 24, tabBar: 38 },
-    comfortable: { cellHeight: 34, fieldHeight: 30, tabBar: 44 },
-    spacious: { cellHeight: 40, fieldHeight: 34, tabBar: 48 }
+    compact: { cellHeight: 30, fieldHeight: 28, tabBar: 38 },
+    comfortable: { cellHeight: 36, fieldHeight: 32, tabBar: 44 },
+    spacious: { cellHeight: 42, fieldHeight: 36, tabBar: 48 }
   };
 
   var DEFAULT_FONT =
