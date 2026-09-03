@@ -913,6 +913,172 @@
   --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M11 4a7 7 0 1 0 0 14 7 7 0 1 0 0-14 M16.2 16.2L21 21'/%3E%3C/svg%3E");
 }
 
+/* ------------------------------------------------------------ navbar tray */
+
+/*
+ * The utility controls become one tray on the right: a soft pill of round buttons, which is how
+ * the React skin presents them and where it puts them. etendo-skin-topbar.js does the two things
+ * a stylesheet cannot - it re-orders the top layout so the logos lead and the tray trails, and it
+ * re-measures the buttons to 40x40, since SmartClient writes width and height inline. Everything
+ * below is the look.
+ *
+ * The pill is the ToolStrip itself: it shrink wraps its members, so it is already exactly as wide
+ * as the buttons it holds.
+ */
+.etskin-on .OBNavBarToolStrip {
+  background-color: var(--sk-neutral-soft);
+  border-radius: 999px;
+}
+
+/*
+ * The chip is the OBNavBarComponent wrapper core puts around every navbar widget. It is also the
+ * element OBQuickRun swaps to OBNavBarComponentSelected while a flyout is open, which is why the
+ * open state is worth marking here rather than leaving to the widget.
+ */
+.etskin-on .etskin-tray-item {
+  margin-inline-end: 0;
+  background-color: var(--sk-surface);
+  border-radius: 999px;
+  box-shadow: var(--sk-shadow-sm);
+  --sk-icon-color: var(--sk-text-muted);
+}
+
+.etskin-on .etskin-tray-item:hover {
+  background-color: var(--sk-primary-soft);
+  border-radius: 999px;
+  --sk-icon-color: var(--sk-primary);
+}
+
+.etskin-on .etskin-tray-item.OBNavBarComponentSelected {
+  background-color: var(--sk-primary);
+  border-radius: 999px;
+  --sk-icon-color: var(--sk-on-primary);
+}
+
+/* The stock widgets bring their own artwork; inside a chip the mask below is the artwork. */
+.etskin-on .etskin-tray-item img {
+  visibility: hidden;
+}
+
+/*
+ * Three of these buttons are text - "Alerts (1)", "Help", "admin" - so the label has to go and an
+ * icon has to take its place. The label is not one element: SmartClient renders a button as a
+ * table and hands the styleName to the cell, to its spacer cells and to the icon slot alike, so
+ * masking "the cell" masks four overlapping copies of the icon. The wrapper is the one element per
+ * button that is exactly the button, so the icon is drawn there and the cells only lose their text.
+ * The Over and Down states append to the class name, hence the prefix match.
+ */
+.etskin-on .etskin-tray-alert [class^="OBNavBarTextButton"],
+.etskin-on .etskin-tray-help [class^="OBNavBarTextButton"],
+.etskin-on .etskin-tray-logout .OBNavBarImgButton {
+  font-size: 0 !important;
+  line-height: 0 !important;
+  color: transparent !important;
+  background-image: none;
+}
+
+/*
+ * SmartClient writes a z-index on the button inline, so the icon has to out-rank it. Both live
+ * inside the wrapper's own stacking context, so the number only ever competes with its siblings.
+ */
+.etskin-on .etskin-tray-alert::before,
+.etskin-on .etskin-tray-help::before,
+.etskin-on .etskin-tray-logout::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-color: var(--sk-icon-color);
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: 20px 20px;
+  mask-size: 20px 20px;
+  -webkit-mask-image: var(--sk-icon);
+  mask-image: var(--sk-icon);
+  pointer-events: none;
+  z-index: 999998;
+}
+
+.etskin-on .etskin-tray-alert::before {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9 M10.3 21a2 2 0 0 0 3.4 0'/%3E%3C/svg%3E");
+}
+
+.etskin-on .etskin-tray-help::before {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M9.2 9.3a3 3 0 0 1 5.8 1c0 2-3 2.6-3 4 M12 17.4h.01'/%3E%3C/svg%3E");
+}
+
+.etskin-on .etskin-tray-logout::before {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4 M16 17l5-5-5-5 M21 12H9'/%3E%3C/svg%3E");
+}
+
+/*
+ * The bell carries a dot rather than the number, and the stock label - already translated, already
+ * counted - becomes the tooltip, which says more than "Alerts (1)" did and costs no width.
+ */
+.etskin-on .etskin-tray-alert-on::after {
+  content: "";
+  position: absolute;
+  top: 6px;
+  inset-inline-end: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background-color: var(--sk-danger);
+  box-shadow: 0 0 0 2px var(--sk-surface);
+  pointer-events: none;
+  z-index: 999999;
+}
+
+/*
+ * The profile button keeps its text, because in Classic this menu is where role, client and
+ * organisation are switched and the initials say which identity is loaded. Two letters in a tinted
+ * circle is the avatar every other application in the user's day already shows them.
+ */
+.etskin-on .etskin-tray-profile {
+  background-color: var(--sk-primary-soft);
+  box-shadow: none;
+}
+
+.etskin-on .etskin-tray-profile [class^="OBNavBarTextButton"] {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.02em;
+  color: var(--sk-primary) !important;
+}
+
+.etskin-on .etskin-tray-profile.OBNavBarComponentSelected [class^="OBNavBarTextButton"],
+.etskin-on .etskin-tray-profile:hover [class^="OBNavBarTextButton"] {
+  color: var(--sk-on-primary) !important;
+}
+
+.etskin-on .etskin-tray-profile:hover {
+  background-color: var(--sk-primary);
+}
+
+/*
+ * A navigation bar component from a module this skin knows nothing about. It keeps whatever width
+ * it measured for itself - it may be a text button - and only takes the pill and the palette.
+ */
+.etskin-on .etskin-tray-wide [class^="OBNavBarTextButton"],
+.etskin-on .etskin-tray-wide .OBNavBarImgButton {
+  font-family: var(--sk-font);
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: var(--sk-icon-color) !important;
+}
+
+/* The two quick launch buttons are masked further up; in a chip they only need to be centred. */
+.etskin-on .etskin-tray-item .OBNavBarCreateNew,
+.etskin-on .etskin-tray-item .OBQuickLaunch {
+  background-color: var(--sk-icon-color);
+}
+
+.etskin-on .etskin-tray-item .OBNavBarCreateNew:hover,
+.etskin-on .etskin-tray-item .OBQuickLaunch:hover {
+  background-color: var(--sk-icon-color);
+}
+
 .etskin-on [class^="OBApplicationMenuTreeItemCell"] {
   font-family: var(--sk-font);
   font-size: 13px;
