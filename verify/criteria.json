@@ -2,7 +2,12 @@
   "version": 1,
   "source": "Design and UX critique by Fable 5.1, recorded in verify/feedback.md",
   "note": "Thresholds only. The assertions that read them live in check-dom.mjs and check-source.mjs, and the measurements they run against are recorded by capture.js.",
-  "screens": ["grid", "form", "rail", "login"],
+  "screens": [
+    "grid",
+    "form",
+    "rail",
+    "login"
+  ],
   "thresholds": {
     "F1": {
       "maxIconsBeforeRightGroup": 10,
@@ -15,7 +20,10 @@
       "maxInputBorderLeft": 0,
       "minInputHeight": 32,
       "columnPitchTolerance": 8,
-      "requiredHueRange": [0, 12],
+      "requiredHueRange": [
+        0,
+        12
+      ],
       "linkGlyphRestOpacity": 0,
       "maxDecorationsPerFieldAtRest": 1
     },
@@ -46,7 +54,8 @@
       "maxTopBarTextSize": 16,
       "maxTopBarHeight": 56,
       "maxLogoHeight": 32,
-      "minRecordTitleSize": 18
+      "minRecordTitleSize": 18,
+      "maxBrandAxisDrift": 4
     },
     "F8": {
       "minDistinctSectionIcons": 7,
@@ -63,7 +72,9 @@
     "F10": {
       "maxDistinctFontSizes": 5,
       "maxUppercaseLabelLength": 3,
-      "allowWeight700OnlyOn": ["login"]
+      "allowWeight700OnlyOn": [
+        "login"
+      ]
     },
     "F11": {
       "allowTrayContainerBorder": false,

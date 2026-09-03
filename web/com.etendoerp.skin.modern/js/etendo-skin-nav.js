@@ -43,6 +43,9 @@
   var sidebar = null; // the isc.Canvas
   var menuDelegate = null; // an OBApplicationMenuTree, used only for itemClick
   var menuData = null;
+  // The index path of the node whose window is open, kept because the row it names is not always
+  // the row that carries the mark; see applyCurrent.
+  var currentPath = null;
 
   // ------------------------------------------------------------------ gates
 
@@ -127,12 +130,110 @@
     return 'window';
   }
 
-  function iconMarkup(node, depth) {
+  /*
+   * Distinct glyphs for the top level sections.
+   *
+   * A folder node in OB.Application.menu carries a translated title and nothing else - no id, no
+   * value, no window - so there is no stable key to hang a shipped drawing on, and any installed
+   * module may add a section of its own. Two passes cover both halves of that: the title is matched
+   * against a small table of the words the standard sections are named with, in English and in
+   * Spanish, and whatever is left over takes the next unused glyph from the pool. So the usual
+   * sections get the glyph that means them, an unknown section still gets one of its own, and no
+   * two sections in a menu ever share one - which is the whole job the rail needs done.
+   *
+   * This replaces the monogram the rail used to draw. A monogram is always available and always
+   * distinct, but "GS MD PM WM PM MR SM PS FM" down a 52px strip is a column of initials, not an
+   * index: two of them were even the same. Artwork from a provider still wins over all of this.
+   */
+  var SECTION_POOL = [
+    'sliders', 'layers', 'inbound', 'package', 'factory', 'clipboard', 'trend',
+    'briefcase', 'card', 'star', 'tag', 'flag', 'compass', 'grid', 'bolt'
+  ];
+
+  // Matched as substrings of the lowercased title, in the order written here: 'setup' is looked for
+  // before 'general' so that "General Setup" is read as a setup section rather than a general one.
+  var SECTION_WORDS = [
+    ['master data', 'layers'],
+    ['datos maestros', 'layers'],
+    ['procurement', 'inbound'],
+    ['compras', 'inbound'],
+    ['warehouse', 'package'],
+    ['almac', 'package'],
+    ['production', 'factory'],
+    ['producci', 'factory'],
+    ['requirement', 'clipboard'],
+    ['planificaci', 'clipboard'],
+    ['sales', 'trend'],
+    ['ventas', 'trend'],
+    ['project', 'briefcase'],
+    ['proyecto', 'briefcase'],
+    ['financial', 'card'],
+    ['financiera', 'card'],
+    ['finanzas', 'card'],
+    ['setup', 'sliders'],
+    ['configuraci', 'sliders'],
+    ['general', 'sliders']
+  ];
+
+  var sectionGlyphs = null;
+
+  function computeSectionGlyphs() {
+    var used = {};
+    var out = [];
+    var i, j, title, glyph;
+
+    for (i = 0; i < menuData.length; i++) {
+      title = String(menuData[i].title || '').toLowerCase();
+      glyph = null;
+      for (j = 0; j < SECTION_WORDS.length; j++) {
+        if (title.indexOf(SECTION_WORDS[j][0]) !== -1 && !used[SECTION_WORDS[j][1]]) {
+          glyph = SECTION_WORDS[j][1];
+          break;
+        }
+      }
+      if (glyph) {
+        used[glyph] = true;
+      }
+      out.push(glyph);
+    }
+
+    for (i = 0; i < out.length; i++) {
+      if (out[i]) {
+        continue;
+      }
+      for (j = 0; j < SECTION_POOL.length; j++) {
+        if (!used[SECTION_POOL[j]]) {
+          out[i] = SECTION_POOL[j];
+          used[SECTION_POOL[j]] = true;
+          break;
+        }
+      }
+      // A menu with more sections than the pool has glyphs: the tail repeats rather than going
+      // blank, because a glyph shared with a section eight rows away still tells this one from its
+      // neighbours.
+      if (!out[i]) {
+        out[i] = SECTION_POOL[i % SECTION_POOL.length];
+      }
+    }
+    return out;
+  }
+
+  function sectionGlyph(index) {
+    if (!sectionGlyphs) {
+      sectionGlyphs = computeSectionGlyphs();
+    }
+    return sectionGlyphs[index] || SECTION_POOL[0];
+  }
+
+  function iconMarkup(node, depth, index) {
     // Artwork is a section level idea, so it is only consulted for the top of the tree. Deeper
     // nodes keep the masked glyph that says what kind of thing they open.
     var art = depth === 0 ? artworkFor(node) : null;
     if (art) {
       return '<img class="etskin-nav-art" src="' + esc(art) + '" alt="">';
+    }
+    if (depth === 0) {
+      return '<span class="etskin-nav-icon etskin-nav-icon-sec-' + sectionGlyph(index) + '"></span>';
     }
     return '<span class="etskin-nav-icon etskin-nav-icon-' + iconFor(node) + '"></span>';
   }
@@ -170,6 +271,7 @@
       html.push('<div class="etskin-nav-group">');
       html.push(
         '<button type="button" class="etskin-nav-row' +
+          (depth === 0 ? ' etskin-nav-row-top' : '') +
           (isFolder ? ' etskin-nav-row-folder' : '') +
           '" data-p="' +
           path +
@@ -179,7 +281,7 @@
           (isFolder ? ' aria-expanded="false"' : '') +
           '>'
       );
-      html.push(iconMarkup(node, depth));
+      html.push(iconMarkup(node, depth, i));
       html.push('<span class="etskin-nav-label">' + esc(node.title) + '</span>');
       if (isFolder) {
         html.push('<span class="etskin-nav-chevron"></span>');
@@ -196,38 +298,11 @@
   }
 
   /*
-   * The collapsed rail needs one distinguishable glyph per top level section, and Etendo Classic
-   * cannot supply artwork for them: a folder node in OB.Application.menu carries a translated
-   * title and nothing else - no id, no value, no window - so there is no stable key to hang a
-   * per-section icon on, and any installed module may add a section of its own. The React skin can
-   * ship drawings because its sections are hardcoded in the frontend; here they are data.
-   *
-   * A monogram taken from the title is the one mark that is always available, always distinct
-   * enough to tell two neighbours apart, and correct in every language without a lookup table.
+   * The section title is carried on every tile as text as well as on its tooltip. The stylesheet
+   * takes it out of the picture but leaves it in the accessibility tree, so the rail is nine named
+   * buttons to a screen reader and nine glyphs to everyone else - which a tooltip alone would not
+   * have managed, since a tooltip is not an accessible name.
    */
-  var STOPWORDS = ' and or of for the a y e o de del la el los las por para ';
-
-  function monogram(title) {
-    var words = String(title === null || title === undefined ? '' : title).split(' ');
-    var picked = [];
-    var i, word;
-
-    for (i = 0; i < words.length && picked.length < 2; i++) {
-      word = trim(words[i]);
-      if (!word || STOPWORDS.indexOf(' ' + word.toLowerCase() + ' ') !== -1) {
-        continue;
-      }
-      picked.push(word);
-    }
-    if (!picked.length) {
-      return '\u2022';
-    }
-    if (picked.length === 1) {
-      return picked[0].substring(0, 2).toUpperCase();
-    }
-    return picked[0].charAt(0).toUpperCase() + picked[1].charAt(0).toUpperCase();
-  }
-
   function renderRail() {
     var html = [];
     var i, node, art;
@@ -236,14 +311,17 @@
       node = menuData[i];
       art = artworkFor(node);
       html.push(
-        '<button type="button" class="etskin-nav-tile" data-p="' +
+        '<button type="button" class="etskin-nav-tile' +
+          (art ? '' : ' etskin-nav-icon-sec-' + sectionGlyph(i)) +
+          '" data-p="' +
           i +
           '" title="' +
           esc(node.title) +
           '">' +
-          (art
-            ? '<img class="etskin-nav-art" src="' + esc(art) + '" alt="">'
-            : esc(monogram(node.title))) +
+          (art ? '<img class="etskin-nav-art" src="' + esc(art) + '" alt="">' : '') +
+          '<span class="etskin-nav-tile-name">' +
+          esc(node.title) +
+          '</span>' +
           '</button>'
       );
     }
@@ -304,6 +382,12 @@
 
   function renderPanel() {
     var menuLabel = label('UINAVBA_APPLICATION_MENU', 'Application');
+    /*
+     * The box narrows the tree down to what matches, which is filtering rather than searching, and
+     * "Filter" is a label core already ships translated. The panel deliberately has no strings of
+     * its own; see label() below for why.
+     */
+    var filterLabel = label('OBUIAPP_CalWidget_Filter', 'Filter');
     return (
       '<div class="etskin-nav" role="navigation" aria-label="' +
       esc(menuLabel) +
@@ -311,7 +395,9 @@
       '<div class="etskin-nav-head">' +
       '<div class="etskin-nav-search">' +
       '<span class="etskin-nav-search-icon"></span>' +
-      '<input type="text" class="etskin-nav-search-input" autocomplete="off" spellcheck="false" aria-label="' +
+      '<input type="text" class="etskin-nav-search-input" autocomplete="off" spellcheck="false" placeholder="' +
+      esc(filterLabel) +
+      '" aria-label="' +
       esc(menuLabel) +
       '">' +
       '</div>' +
@@ -364,6 +450,9 @@
     var open = hasClass(group, 'etskin-nav-open');
     setClass(group, 'etskin-nav-open', !open);
     row.setAttribute('aria-expanded', open ? 'false' : 'true');
+    // Opening or closing a folder changes which rows are on screen, and the mark is only ever put
+    // on a row the user can see.
+    applyCurrent(currentPath);
   }
 
   function setClass(el, name, on) {
@@ -394,14 +483,12 @@
    * The rail's whole point: collapsed, it still says which section you are in. Without this the
    * 52px strip would be decoration, and hiding the tree would cost the user their bearings.
    */
-  function updateRail() {
+  function updateRail(path) {
     var root = panel();
     if (!root) {
       return;
     }
-    var current = root.querySelector('.etskin-nav-current');
-    var path = current ? current.getAttribute('data-p') : null;
-    var section = path ? path.split('.')[0] : null;
+    var section = path ? String(path).split('.')[0] : null;
     var tiles = root.querySelectorAll('.etskin-nav-tile');
     var i;
     for (i = 0; i < tiles.length; i++) {
@@ -413,17 +500,41 @@
     }
   }
 
-  function markCurrent(row) {
+  /*
+   * Fills exactly one row, and the rail tile for the section that row belongs to.
+   *
+   * The row that was opened is usually inside a folder that is closed - the tree starts closed and
+   * a window opened from a recent chip or a bookmark never opened one - so it is in the markup but
+   * not on the screen, and marking it would leave the expanded panel saying less about where the
+   * user is than the 52px rail beside it does. When that happens the mark moves up to the section
+   * the row belongs to, which is the section the rail fills, so the two never disagree. It comes
+   * back down to the row itself as soon as the folder is opened, because every gesture that changes
+   * which rows are visible calls this again.
+   */
+  function applyCurrent(path) {
     var root = panel();
     if (!root) {
       return;
     }
+    var target = path
+      ? root.querySelector('.etskin-nav-row[data-p="' + path + '"]')
+      : null;
+    if (target && target.offsetParent === null) {
+      target = root.querySelector(
+        '.etskin-nav-row[data-p="' + String(path).split('.')[0] + '"]'
+      );
+    }
     var rows = root.querySelectorAll('.etskin-nav-row');
     var i;
     for (i = 0; i < rows.length; i++) {
-      setClass(rows[i], 'etskin-nav-current', rows[i] === row);
+      setClass(rows[i], 'etskin-nav-current', rows[i] === target);
     }
-    updateRail();
+    updateRail(path);
+  }
+
+  function markCurrent(row) {
+    currentPath = row ? row.getAttribute('data-p') : null;
+    applyCurrent(currentPath);
   }
 
   // Keeps the panel in step with the tab strip, so closing a tab or switching to one opened from
@@ -439,13 +550,16 @@
       : null;
     var title = tab && (tab.title || tab.tabTitle);
     var rows = root.querySelectorAll('.etskin-nav-row');
-    var i, labelEl, match;
-    for (i = 0; i < rows.length; i++) {
+    var i, labelEl;
+    currentPath = null;
+    for (i = 0; title && i < rows.length; i++) {
       labelEl = rows[i].querySelector('.etskin-nav-label');
-      match = !!title && !!labelEl && labelEl.textContent === title;
-      setClass(rows[i], 'etskin-nav-current', match);
+      if (labelEl && labelEl.textContent === title) {
+        currentPath = rows[i].getAttribute('data-p');
+        break;
+      }
     }
-    updateRail();
+    applyCurrent(currentPath);
   }
 
   function refreshRecents() {
@@ -542,6 +656,7 @@
     sidebar.setWidth(isCollapsed ? RAIL_WIDTH : NAV_WIDTH);
     if (root) {
       setClass(root, 'etskin-nav-collapsed', isCollapsed);
+      applyCurrent(currentPath);
       if (!isCollapsed && focusSearch) {
         var input = root.querySelector('.etskin-nav-search-input');
         if (input) {
@@ -591,6 +706,7 @@
         section.setAttribute('aria-expanded', 'true');
         section.scrollIntoView({ block: 'nearest' });
       }
+      applyCurrent(currentPath);
       return;
     }
 

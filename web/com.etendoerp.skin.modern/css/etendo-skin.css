@@ -116,6 +116,12 @@
   --sk-border-hairline: color-mix(in srgb, var(--sk-text) 7%, transparent);
   /* Fields are filled rather than boxed, so the fill has to be a token like every other colour. */
   --sk-field-fill: color-mix(in srgb, var(--sk-text) 3%, var(--sk-surface));
+  /*
+   * The fill behind a band that divides content rather than contains it: a form section header, and
+   * anything else that has to read as a rule with a name on it. Opaque, not a tint over the surface,
+   * because these sit on top of cards that are themselves already tinted.
+   */
+  --sk-band: color-mix(in srgb, var(--sk-text) 7%, var(--sk-surface));
   --sk-primary-hover: color-mix(in srgb, var(--sk-primary) 86%, black);
   --sk-primary-soft: color-mix(in srgb, var(--sk-primary) 10%, var(--sk-surface));
   --sk-primary-softer: color-mix(in srgb, var(--sk-primary) 5%, var(--sk-surface));
@@ -915,6 +921,70 @@
   color: var(--sk-text-faint);
 }
 
+/* ------------------------------------------------------------ form sections */
+
+/*
+ * A section header was a line of text with a 12px triangle at the far left and nothing behind it,
+ * so a long form read as one unbroken column of fields with the occasional slightly bolder line in
+ * it. Painting the header makes it a band: the eye can find where one group of fields ends.
+ *
+ * The header is an ImgButton, so its markup is a table of cap cells around a title cell and the
+ * only element that spans the whole control is the table itself. It carries no class of its own -
+ * the classes are on the cells - so it is reached through the wrapper div, which SmartClient stamps
+ * with the background canvas's ID in an eventproxy attribute. That attribute is the hook.
+ *
+ * The chevron is positioned against the table rather than against the title cell, so that it lands
+ * at the band's own right edge whatever the cap cells measure. That means the cell and the two
+ * nested divs inside it have to stop clipping: they are overflow:hidden with an ellipsis, for a
+ * title that is never long enough to need it, and they would cut an absolutely positioned child off
+ * at the end of the text.
+ */
+
+.etskin-on div[eventproxy*="OBSectionItemButton"] > table {
+  position: relative;
+  background-color: var(--sk-band);
+  border-radius: var(--sk-radius-sm);
+}
+
+.etskin-on div[eventproxy*="OBSectionItemButton"] td[class^="OBSectionItemButton_Title"],
+.etskin-on div[eventproxy*="OBSectionItemButton"] td[class^="OBSectionItemButton_Title"] div {
+  overflow: visible !important;
+}
+
+.etskin-on div[eventproxy*="OBSectionItemButton"] td[class^="OBSectionItemButton_Title"] {
+  font-family: var(--sk-font);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--sk-text);
+  padding-inline-start: 12px;
+}
+
+/* The stock left-hand triangle. The chevron replaces it, at the edge the section opens against. */
+.etskin-on div[eventproxy*="OBSectionItemButton"] td[class^="OBSectionItemButton_Title"] img {
+  display: none;
+}
+
+/*
+ * Two borders on an empty 8px box: rotated 45 degrees it points down, at -45 it points right. No
+ * character, no font, no image - so it inherits the band's colour and costs no request.
+ */
+.etskin-on .etskin-section-chevron {
+  position: absolute;
+  inset-inline-end: 12px;
+  top: 50%;
+  margin-top: -6px;
+  width: 7px;
+  height: 7px;
+  border-right: 1.5px solid var(--sk-text-muted);
+  border-bottom: 1.5px solid var(--sk-text-muted);
+  transform: rotate(45deg);
+}
+
+.etskin-on td[class^="OBSectionItemButton_Title"][class$="closed"] .etskin-section-chevron {
+  transform: rotate(-45deg);
+  margin-top: -4px;
+}
+
 /* ---------------------------------------------------- navbar and app menu */
 
 .etskin-on .OBTopLayout {
@@ -1005,12 +1075,65 @@
  * re-measures the buttons to 40x40, since SmartClient writes width and height inline. Everything
  * below is the look.
  *
- * The pill is the ToolStrip itself: it shrink wraps its members, so it is already exactly as wide
- * as the buttons it holds.
+ * The tray itself is not drawn. An enclosing tint behind six controls that already read as six
+ * controls is one more edge to parse for no information: the chips carry the surface and the
+ * shadow, and the strip only has to hold them.
+ *
+ * The padding is load bearing rather than decorative. A ToolStrip is paddingAsLayoutMargin, so
+ * this is the inset the strip lays its members out inside - which is why etendo-skin-topbar.js
+ * keeps a copy of the 3 as TRAY_PAD and sizes the strip to the button plus twice it. Change one
+ * and change the other.
+ *
+ * The margin is reset for the same reason it is easy to miss: the stock rule puts 10px above the
+ * strip, and a margin on a member is height the layout has to find, so those 10px were the
+ * difference between a 55px bar and a 65px one while every measurement of the strip itself said
+ * 46. The gap it was providing on the right is now the top layout's right margin, which is the
+ * place that can also mirror it for a right-to-left reading.
  */
 .etskin-on .OBNavBarToolStrip {
-  background-color: var(--sk-neutral-soft);
+  background-color: transparent;
+  border: 0 none;
   border-radius: 999px;
+  padding: 3px 8px;
+  margin: 0;
+}
+
+/*
+ * The company logo and the Openbravo mark are <img>s core sizes from the uploaded file, so a
+ * 150x42 upload sets the height of the whole bar. Capping the height and letting the width follow
+ * keeps the proportions of whatever was uploaded; it is done here rather than in JavaScript
+ * because a measurement taken at install time is taken before the bar has been laid out, and an
+ * earlier version that computed the width from getVisibleWidth squashed a 150x42 logo to 28x28.
+ */
+.etskin-on img[src*="ShowImageLogo"],
+.etskin-on img[src*="PoweredByOpenbravo"] {
+  max-height: 28px;
+  width: auto;
+  vertical-align: middle;
+}
+
+/*
+ * Centring them in the bar. An earlier version did it on the image itself with top: 50% and a
+ * translateY(-50%), which clipped both marks: top resolves against the containing block, and the
+ * containing block here is not the 55px bar but the label div core wraps the image in, which is
+ * only as tall as the image. That offset and the baseline shift of an inline image compounded and
+ * pulled the logo ten pixels above the top of the page.
+ *
+ * So the line box does it instead. Giving the wrapper the height of the button cluster opposite it
+ * and centring the image in that line box lands both marks on the same axis as the cluster, and
+ * because a line box centres its content whatever that content measures, it stays centred if the
+ * uploaded logo is shorter than the 28px cap.
+ *
+ * Two wrappers, because the two marks are not built the same way: the company logo is a bare image
+ * in a div, and the Openbravo mark is wrapped in a link first.
+ */
+.etskin-on div:has(> img[src*="ShowImageLogo"]),
+.etskin-on div:has(> a > img[src*="PoweredByOpenbravo"]) {
+  line-height: 46px;
+}
+
+.etskin-on a:has(> img[src*="PoweredByOpenbravo"]) {
+  vertical-align: middle;
 }
 
 /*
@@ -1278,9 +1401,33 @@
   color: var(--sk-text-muted);
 }
 
-.etskin-on .OBStatusBarTextLabel_Title {
+/*
+ * Core writes every field caption on the status bar in bold and the pipes between them in bold too,
+ * which put more weight on a divider than on the values it divides. Captions step down to the same
+ * 600 the rest of the skin uses for emphasis, and the dividers stop being emphasis at all.
+ */
+.etskin-on .OBStatusBarTextLabel_Title,
+.etskin-on .OBStatusBarTextLink_Title {
   color: var(--sk-text);
   font-weight: 600;
+}
+
+.etskin-on .OBStatusBarTextLabel_Separator {
+  font-weight: 400;
+  color: var(--sk-text-faint);
+}
+
+/*
+ * The record's own name, put at the head of the status bar by etendo-skin-form.js. A form has no
+ * other heading - the window's tab says which window, not which record - so this is the largest
+ * text on the screen and everything else on the bar is its subtitle.
+ */
+.etskin-on .etskin-record-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--sk-text);
+  letter-spacing: -0.01em;
+  padding-inline-end: 14px;
 }
 
 /* --------------------------------------------------- dialogs and messages */
@@ -1461,15 +1608,19 @@
 /* ---------------------------------------------------------- active view */
 
 /*
- * The split view marker is a 6px band of #fad614 down the full height of the view. Four rounded
+ * The split view marker is a 6px band of #fad614 down the full height of the view. Three rounded
  * pixels of the marker colour say "focus is here" just as clearly at a fraction of the weight, and
  * keeping it yellow rather than folding it into the primary leaves the primary meaning selection.
+ *
+ * Three rather than four so that it is exactly the width of the inactive marker beside it: the two
+ * are drawn in the same slot, and a marker that changed width as well as colour moved every pane in
+ * the window by a pixel each time focus crossed the split.
  */
 .etskin-on .OBViewActive {
   background-color: var(--sk-marker);
-  width: 4px !important;
-  min-width: 4px !important;
-  border-radius: 4px;
+  width: 3px !important;
+  min-width: 3px !important;
+  border-radius: 3px;
 }
 
 .etskin-on .OBViewInActive {
@@ -1774,13 +1925,17 @@
   padding: 2px 8px 10px 8px;
 }
 
+/*
+ * Group headings, set in the same size as the rest of the panel rather than in a smaller uppercase
+ * one. Uppercase at 10px was a second thing to decode - a shouted word in a type size used nowhere
+ * else in the product - and it bought nothing that colour and weight do not already say.
+ */
 .etskin-on .etskin-nav-recents-title,
 .etskin-on .etskin-nav-section-title {
   padding: 4px 8px 6px 8px;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
   color: var(--sk-text-faint);
 }
 
@@ -1842,6 +1997,17 @@
   transition: background-color 110ms ease, color 110ms ease;
 }
 
+/*
+ * A section is a heavier target than a window under it: nine of these are the whole index of the
+ * application, and at the same 32px as every one of their 277 children the panel read as one
+ * undifferentiated list. The extra eight pixels and the extra weight are the only thing separating
+ * the two levels, since both carry an icon and neither is indented.
+ */
+.etskin-on .etskin-nav-row-top {
+  height: 40px;
+  font-weight: 600;
+}
+
 .etskin-on .etskin-nav-row:hover {
   background-color: var(--sk-neutral-soft);
 }
@@ -1871,8 +2037,13 @@
   background-color: var(--sk-primary);
 }
 
-/* A folder holding the open view is tinted rather than filled, so only one row reads as selected. */
-.etskin-on .etskin-nav-group:has(.etskin-nav-current) > .etskin-nav-row-folder {
+/*
+ * A folder holding the open view is tinted rather than filled, so only one row reads as selected.
+ * The folder is excluded when it is itself the marked row - which is what happens when the row for
+ * the open window is inside a closed section - because :has outranks the fill rule above and would
+ * paint dark blue text on the dark blue fill.
+ */
+.etskin-on .etskin-nav-group:has(.etskin-nav-current) > .etskin-nav-row-folder:not(.etskin-nav-current) {
   color: var(--sk-primary);
 }
 
@@ -1936,6 +2107,74 @@
 
 .etskin-on .etskin-nav-icon-external {
   --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14 4h6v6 M20 4l-9 9 M18 13v7H4V6h7'/%3E%3C/svg%3E");
+}
+
+
+/*
+ * Section glyphs. One per top level section, assigned by etendo-skin-nav.js so that no two
+ * sections in a menu ever carry the same one. They are declared as --sk-icon and nothing else,
+ * because both the things that draw them - the row's .etskin-nav-icon and the rail tile's ::before
+ * - are already masks over that variable, at their own sizes.
+ */
+
+.etskin-on .etskin-nav-icon-sec-sliders {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 7h16 M4 12h16 M4 17h16 M9 5v4 M15 10v4 M7 15v4'/%3E%3C/svg%3E");
+}
+
+.etskin-on .etskin-nav-icon-sec-layers {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3l9 5-9 5-9-5z M3 13l9 5 9-5'/%3E%3C/svg%3E");
+}
+
+.etskin-on .etskin-nav-icon-sec-inbound {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3v10 M8 9l4 4 4-4 M4 17v3h16v-3'/%3E%3C/svg%3E");
+}
+
+.etskin-on .etskin-nav-icon-sec-package {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 7l9-4 9 4v10l-9 4-9-4z M3 7l9 4 9-4 M12 11v10'/%3E%3C/svg%3E");
+}
+
+.etskin-on .etskin-nav-icon-sec-factory {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 20V10l5 3V10l5 3V9l5 3v8z M7 17h2 M13 17h2'/%3E%3C/svg%3E");
+}
+
+.etskin-on .etskin-nav-icon-sec-clipboard {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 4h6v3H9z M9 5H6v15h12V5h-3 M9 11h6 M9 15h4'/%3E%3C/svg%3E");
+}
+
+.etskin-on .etskin-nav-icon-sec-trend {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 17l5-5 3 3 7-7 M15 8h5v5'/%3E%3C/svg%3E");
+}
+
+.etskin-on .etskin-nav-icon-sec-briefcase {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 8h18v12H3z M9 8V5h6v3 M3 13h18'/%3E%3C/svg%3E");
+}
+
+.etskin-on .etskin-nav-icon-sec-card {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 6h18v12H3z M3 10h18 M7 15h4'/%3E%3C/svg%3E");
+}
+
+.etskin-on .etskin-nav-icon-sec-star {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 4l2.4 5.2 5.6.7-4.2 3.9 1.1 5.6-4.9-2.8-4.9 2.8 1.1-5.6L4 9.9l5.6-.7z'/%3E%3C/svg%3E");
+}
+
+.etskin-on .etskin-nav-icon-sec-tag {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 4h7l9 9-7 7-9-9z M8 8v0'/%3E%3C/svg%3E");
+}
+
+.etskin-on .etskin-nav-icon-sec-flag {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 21V4 M5 5h13l-3 4 3 4H5'/%3E%3C/svg%3E");
+}
+
+.etskin-on .etskin-nav-icon-sec-compass {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z M15 9l-2 4-4 2 2-4z'/%3E%3C/svg%3E");
+}
+
+.etskin-on .etskin-nav-icon-sec-grid {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 4h7v7H4z M13 4h7v7h-7z M4 13h7v7H4z M13 13h7v7h-7z'/%3E%3C/svg%3E");
+}
+
+.etskin-on .etskin-nav-icon-sec-bolt {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M13 3L5 14h6l-1 7 8-11h-6z'/%3E%3C/svg%3E");
 }
 
 .etskin-on .etskin-nav-chevron {
@@ -2032,9 +2271,11 @@
  * be four levels of glyphs with no titles; railing the sections is a real index - nine targets,
  * each of which expands the panel onto itself.
  *
- * The mark on each tile is a monogram taken from the section title, because a folder node in the
- * menu carries a translated title and no id, so there is no key to hang shipped artwork on. It is
- * replaced by an <img> for any section a provider does supply, and the tile is sized for both.
+ * The mark on each tile is the section's glyph, assigned in etendo-skin-nav.js. It used to be a
+ * monogram taken from the title, which was always available but never legible: nine pairs of
+ * initials down a 52px strip are a column of text to be read, not an index to be recognised, and
+ * two of the nine standard sections produced the same pair. An <img> replaces the glyph for any
+ * section a provider supplies artwork for, and the tile is sized for both.
  */
 .etskin-on .etskin-nav-rail {
   display: none;
@@ -2053,6 +2294,7 @@
 }
 
 .etskin-on .etskin-nav-tile {
+  position: relative;
   flex: 0 0 auto;
   display: flex;
   align-items: center;
@@ -2061,9 +2303,6 @@
   height: 34px;
   padding: 0;
   font-family: var(--sk-font);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
   color: var(--sk-text-muted);
   background-color: var(--sk-neutral-soft);
   border: 0 none;
@@ -2081,6 +2320,44 @@
 .etskin-on .etskin-nav-tile.etskin-nav-tile-current:hover {
   color: var(--sk-on-primary);
   background-color: var(--sk-primary);
+}
+
+/*
+ * The glyph rides currentColor rather than a token of its own, so it turns over with the label when
+ * the tile is filled - one rule instead of one per state. The selector asks for the glyph class
+ * that etendo-skin-nav.js writes: a tile showing artwork has no --sk-icon, and an unresolved mask
+ * is no mask at all, which would paint a solid 19px square over the drawing.
+ */
+.etskin-on .etskin-nav-tile[class*="etskin-nav-icon-sec-"]::before {
+  content: "";
+  width: 19px;
+  height: 19px;
+  background-color: currentColor;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: 19px 19px;
+  mask-size: 19px 19px;
+  -webkit-mask-image: var(--sk-icon);
+  mask-image: var(--sk-icon);
+}
+
+/*
+ * The section title, kept out of the picture and kept in the accessibility tree. Neither
+ * display:none nor visibility:hidden would do: both remove it from the accessibility tree as well,
+ * and the rail would be nine unnamed buttons. The size and weight are stated rather than inherited
+ * so that a string nobody can see cannot add a step to the type scale.
+ */
+.etskin-on .etskin-nav-tile-name {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  white-space: nowrap;
+  clip-path: inset(50%);
+  font-size: 11px;
+  font-weight: 600;
 }
 
 .etskin-on .etskin-nav-tile .etskin-nav-art {

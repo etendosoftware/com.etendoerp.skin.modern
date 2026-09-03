@@ -123,6 +123,36 @@ async function etskinCapture(screen) {
       : null;
     var logo = logoHost ? logoHost.querySelector('img') : document.querySelector('.OBNavBarComponent img');
     var cluster = document.querySelector('.OBNavBarToolStrip');
+    var clusterRect = cluster ? cluster.getBoundingClientRect() : null;
+    var barRect = el ? el.getBoundingClientRect() : null;
+    /*
+     * Where the brand artwork actually landed. Height alone said nothing about it: a logo can be a
+     * perfectly correct 28px and still be hanging ten pixels off the top of the page, which is what
+     * a centring rule that resolved against the wrong containing block was doing. So the edges are
+     * recorded, and so is the middle of the button cluster opposite, because "centred in the bar"
+     * is only worth asserting against the thing the eye compares it to.
+     */
+    /*
+     * The bar's own extent. It is not the handle's rectangle: getHandle returns an inner div that
+     * measures fifteen pixels, while the bar the user sees is the layout's visible height. The top
+     * of the handle is the top of the bar, so the two together give the band the marks have to
+     * stay inside.
+     */
+    var barTop = barRect ? barRect.top : null;
+    var barHeight = top && top.getVisibleHeight ? top.getVisibleHeight()
+      : (barRect ? barRect.height : null);
+    var marks = (el ? all('img', el) : []).filter(laidOut).filter(function (i) {
+      return /ShowImageLogo|PoweredByOpenbravo/.test(String(i.src));
+    }).map(function (i) {
+      var r = i.getBoundingClientRect();
+      return {
+        src: String(i.src).split('/').pop().slice(0, 24),
+        top: round(r.top),
+        bottom: round(r.bottom),
+        height: round(r.height),
+        mid: round(r.top + r.height / 2)
+      };
+    });
     var chips = all('.etskin-tray-item').filter(visible);
     var gaps = [];
     for (var i = 1; i < chips.length; i++) {
@@ -135,6 +165,9 @@ async function etskinCapture(screen) {
       // The wordmark is artwork, not text, so branding weight is measured in image heights.
       logoHeight: logo ? round(logo.getBoundingClientRect().height) : null,
       imageHeights: el ? all('img', el).filter(laidOut).map(function (i) { return round(i.getBoundingClientRect().height); }) : [],
+      box: barTop !== null && barHeight !== null ? { top: round(barTop), bottom: round(barTop + barHeight) } : null,
+      marks: marks,
+      clusterMid: clusterRect ? round(clusterRect.top + clusterRect.height / 2) : null,
       cluster: cluster ? {
         borderWidth: round(parseFloat(getComputedStyle(cluster).borderTopWidth) || 0),
         background: getComputedStyle(cluster).backgroundColor,
@@ -150,17 +183,56 @@ async function etskinCapture(screen) {
   function toolbar() {
     var strip = document.querySelector('.OBToolbar');
     if (!strip) { return null; }
-    var icons = all('[class*="OBToolbarIconButton_icon_"]').filter(laidOut).map(function (el) {
-      var name = (String(el.className).match(/OBToolbarIconButton_icon_([A-Za-z]+)/) || [])[1];
+    /*
+     * Every control on the strip, however it draws its glyph.
+     *
+     * Most of them are stock: an inner element classed OBToolbarIconButton_icon_<name> carries the
+     * sprite. One is not. "Save View" is an icon button by class but a menu button by style - it
+     * draws no sprite at all and shows its title instead, which at 32px wide is clipped to "S...".
+     * The skin hides the word and paints a glyph with a CSS mask on the button itself, so that
+     * control has no OBToolbarIconButton_icon_ element anywhere inside it.
+     *
+     * Collecting only sprite elements therefore skipped a button the user can plainly see, and the
+     * gap it left made the two buttons on either side of it read as one 68px pitch rather than the
+     * three-across-34px group that is actually on screen. The pitch criterion is about whether the
+     * eye can group the controls, so a control the eye can see has to be in the record.
+     *
+     * The skin stamps data-etskin-group on each control it arranges, so that attribute is the
+     * enumeration; the sprite, where there is one, still supplies the name and the disabled state.
+     * On the stock skin nothing is stamped and the sprite sweep is the whole of it, which is what
+     * the before recordings were made with.
+     */
+    var chips = [];
+    var seen = [];
+    function chipFor(el) {
+      return el.closest('.etskin-tb-item') ||
+        el.closest('.OBToolbarIconButton, [class^="OBToolbarIconButton"]') || el;
+    }
+    all('[class*="OBToolbarIconButton_icon_"]').filter(laidOut).forEach(function (el) {
       var host = el.closest('.OBToolbarIconButton, [class^="OBToolbarIconButton"]') || el;
-      var chip = el.closest('.etskin-tb-item') || host;
-      return {
-        name: name,
+      var chip = chipFor(el);
+      var group = el.closest('[data-etskin-group]');
+      seen.push(group || chip);
+      chips.push({
+        name: (String(el.className).match(/OBToolbarIconButton_icon_([A-Za-z]+)/) || [])[1],
         box: box(chip),
         disabled: /Disabled/.test(String(host.className) + String(el.className)) || Number(getComputedStyle(el).opacity) < 0.9,
-        group: (function () { var g = el.closest('[data-etskin-group]'); return g ? g.getAttribute('data-etskin-group') : null; }())
-      };
+        group: group ? group.getAttribute('data-etskin-group') : null
+      });
     });
+    all('[data-etskin-group]').filter(laidOut).forEach(function (el) {
+      if (seen.indexOf(el) !== -1) { return; }
+      if (el.querySelector('[class*="OBToolbarIconButton_icon_"]')) { return; }
+      var cs = getComputedStyle(el);
+      chips.push({
+        name: (String(el.className).match(/etskin-tb-([a-z]+)/) || [])[1] || null,
+        box: box(el),
+        disabled: Number(cs.opacity) < 0.9,
+        group: el.getAttribute('data-etskin-group'),
+        glyph: 'mask'
+      });
+    });
+    var icons = chips;
     var texts = all('.OBToolbarTextButton, [class^="OBToolbarTextButton"]').filter(laidOut).map(function (el) {
       return { label: (el.textContent || '').trim().slice(0, 30), box: box(el), background: getComputedStyle(el).backgroundColor };
     });
@@ -399,8 +471,15 @@ async function etskinCapture(screen) {
 
   // ------------------------------------------------------------- panes, nav
 
+  /*
+   * The form pane is measured on OBFormContainerLayout rather than on OBViewForm. The form element
+   * is as tall as its fields - it overflows, and the container is what scrolls - so on a record with
+   * many fields it reported a height that ran down past the child tabs and off the bottom of the
+   * window, which is not a share of anything. The container is the area the split actually gave the
+   * form. OBViewForm is kept as the fallback for a form drawn without one.
+   */
   function panes() {
-    var formHost = pick('.OBViewForm');
+    var formHost = pick('.OBFormContainerLayout') || pick('.OBViewForm');
     var gridHost = pick('.OBViewGridBody, .OBGridBody');
     var childStrip = pick('.OBTabBarChild');
     var childSet = childStrip ? childStrip.closest('.OBTabSetChildContainer') || childStrip.parentElement : null;
@@ -683,7 +762,7 @@ async function etskinCapture(screen) {
       'js/etendo-skin-nav.js',
       'js/etendo-skin-topbar.js',
       'js/etendo-skin-toolbar.js',
-      'js/etendo-skin-form.js'
+      'js/etendo-skin-form.js', 'js/etendo-skin-grid.js'
     ];
     var out = {};
     for (var i = 0; i < files.length; i++) {

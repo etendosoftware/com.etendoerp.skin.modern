@@ -161,11 +161,17 @@ group('Rules that only exist under interaction');
 
 // ----------------------------------------------------- the one core edit
 
-group('Core stays touched in exactly one place');
+group('Core stays touched in one file and nowhere else');
 {
+  /*
+   * Two lines, both in Login.html: the stylesheet link, and the brand mark that gives the login
+   * panel something to say. Everything else the skin does it does from its own module.
+   */
   const login = read(join('src', 'org', 'openbravo', 'erpCommon', 'security', 'Login.html'), CORE);
   check('Login.html pulls the skin stylesheet', !!login && login.includes('com.etendoerp.skin.modern'),
     login ? 'linked' : 'Login.html not found');
+  check('Login.html carries the brand mark', !!login && login.includes('class="brand-mark"'),
+    login && login.includes('class="brand-mark"') ? 'the panel has an element in it' : 'the brand panel is empty');
 }
 
 // ---------------------------------------------------------------- reporting

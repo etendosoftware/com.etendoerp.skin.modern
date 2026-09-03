@@ -100,21 +100,22 @@
   }
 
   /*
-   * The form opens on the record the grid is holding, so it has to have arrived first and it has to
-   * be selected: switching with nothing selected opens a form with no record in it.
+   * The form opens on the record the grid is holding, so the rows have to have arrived first.
+   *
+   * It is opened with editRecord, which is what a double click on a row calls. switchFormGridVisibility
+   * is not the same thing and is not enough: it only shows the form container and hides the grid, and
+   * it loads nothing - so a form reached that way is on screen with no record in it, and every method
+   * that runs when a record is opened, the ones that label the status bar among them, never runs. An
+   * earlier version of this file switched, and recorded a form that no user could have arrived at.
    */
   async function showForm(v) {
     var grid = v.viewGrid;
-    if (!v.isShowingForm) {
-      await until(function () { return grid.data && grid.data.getLength && grid.data.getLength() > 0; });
-      if (!grid.getSelectedRecord()) {
-        grid.selectSingleRecord(0);
-        await wait(SETTLE);
-      }
-      v.switchFormGridVisibility();
-      await until(function () { return v.isShowingForm && document.querySelector('.OBViewForm'); });
-      await wait(SETTLE);
-    }
+    await until(function () { return grid.data && grid.data.getLength && grid.data.getLength() > 0; });
+    v.editRecord(grid.getRecord(0));
+    await until(function () { return v.isShowingForm && document.querySelector('.OBViewForm'); });
+    // The form initialisation call is a round trip to the server; the status bar and the sections
+    // are only in their final state once it has come back.
+    await wait(SETTLE * 4);
   }
 
   window.etskinDrive = async function (screen) {
