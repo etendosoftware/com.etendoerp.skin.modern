@@ -65,6 +65,7 @@
     ready: false,
     labels: {},
     assistants: [],
+    offline: false,
     featuredOnly: true,
     assistant: null,
 
@@ -463,12 +464,24 @@
     });
   }
 
+  /*
+   * An empty list of agents has two very different causes - the role was granted none, or the
+   * service never answered - and only the status tells them apart. Keeping it is what lets the
+   * panel stop blaming the user's permissions for a servlet that is not deployed.
+   */
   function loadAssistants(next) {
-    get('assistants', function (payload) {
+    get('assistants', function (payload, status) {
+      state.offline = !(status >= 200 && status < 300);
       state.assistants = sortAssistants(toList(payload));
       state.assistant = state.assistants.length ? visibleAssistants()[0] : null;
       next();
     });
+  }
+
+  function noAssistantText() {
+    return state.offline ?
+      label('ETCOP_ConnError', 'Cannot connect to Copilot service.') :
+      label('ETCOP_NoAssistant', 'No agent available. Please check settings and permissions.');
   }
 
   function loadConversations() {
@@ -690,8 +703,8 @@
        * A finished answer and a request that never arrived both reach the browser the same way,
        * because an EventSource is never told the status - so what tells them apart is what is on
        * the screen. A message the panel put there to be replaced is still the last one means the
-       * answer never came, and the exchange has to say so: it used to leave "Processing..." under
-       * the question for good, which read as a panel that had swallowed it.
+       * answer never came, and the exchange has to say so: it used to leave the processing bubble
+       * under the question for good, which read as a panel that had swallowed it.
        */
       if (last && (last.role === ROLE_WAIT || last.role === ROLE_NODE || last.role === ROLE_TOOL)) {
         state.messages.pop();
@@ -716,7 +729,7 @@
      * the panel losing the question. The module's own message says why.
      */
     if (!state.assistant) {
-      state.notice = label('ETCOP_NoAssistant', 'No agent available. Please check settings and permissions.');
+      state.notice = noAssistantText();
       paint();
       return;
     }
@@ -786,8 +799,7 @@
     html += '</div>';
 
     if (!list.length) {
-      return html + '<p class="etskin-cop-empty">' +
-        esc(label('ETCOP_NoAssistant', 'No assistant is available for this role.')) + '</p>';
+      return html + '<p class="etskin-cop-empty">' + esc(noAssistantText()) + '</p>';
     }
     html += '<div class="etskin-cop-assistants">';
     for (i = 0; i < list.length; i++) {
