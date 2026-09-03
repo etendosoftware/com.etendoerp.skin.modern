@@ -57,6 +57,11 @@ public class SkinComponentProvider extends BaseComponentProvider {
     globalResources.add(createStaticResource(WEB_PATH + "js/etendo-skin-dashboard.js", false));
     globalResources.add(createStaticResource(WEB_PATH + "js/etendo-skin-pos.js", false));
     globalResources.add(createStaticResource(WEB_PATH + "js/etendo-skin-orderboard.js", false));
+    /*
+     * Stands down unless Copilot's own toolbar button is in the registry, so an instance without
+     * the module gets a file that does nothing.
+     */
+    globalResources.add(createStaticResource(WEB_PATH + "js/etendo-skin-copilot.js", false));
 
     return globalResources;
   }

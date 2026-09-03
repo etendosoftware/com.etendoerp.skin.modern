@@ -153,7 +153,16 @@ async function etskinCapture(screen) {
         mid: round(r.top + r.height / 2)
       };
     });
-    var chips = all('.etskin-tray-item').filter(visible);
+    /*
+     * Left to right, which is not document order. A tray member is an absolutely positioned canvas
+     * placed by its layout, so a chip added after the bar was built - a module's, moved to the head
+     * of the row - is the first element in the markup and the last one on the screen. Measuring the
+     * gaps in document order reported one of -310px and said nothing about the spacing anyone can
+     * see.
+     */
+    var chips = all('.etskin-tray-item').filter(visible).sort(function (a, b) {
+      return a.getBoundingClientRect().x - b.getBoundingClientRect().x;
+    });
     var gaps = [];
     for (var i = 1; i < chips.length; i++) {
       gaps.push(round(chips[i].getBoundingClientRect().x - chips[i - 1].getBoundingClientRect().right));

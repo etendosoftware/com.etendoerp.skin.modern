@@ -78,7 +78,8 @@
     },
     "F11": {
       "allowTrayContainerBorder": false,
-      "maxTrayButtons": 5,
+      "maxTrayButtons": 6,
+      "maxTrayButtonsNote": "Five chips the skin owns - quick launch, alerts, help, profile, logout - plus one contributed by an installed module. Copilot's navigation bar button is the sixth on this deployment; the skin dresses it as a chip rather than hiding it, so what the finding asks for - one row of equal, evenly spaced buttons and no box around them - is still what the size and gap assertions measure.",
       "trayButtonSize": 40,
       "trayButtonSizeTolerance": 2,
       "minTrayGap": 6

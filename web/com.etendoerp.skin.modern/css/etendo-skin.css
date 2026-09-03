@@ -1176,6 +1176,7 @@
  */
 .etskin-on .etskin-tray-alert [class^="OBNavBarTextButton"],
 .etskin-on .etskin-tray-help [class^="OBNavBarTextButton"],
+.etskin-on .etskin-tray-copilot [class^="navBarButton"],
 .etskin-on .etskin-tray-logout .OBNavBarImgButton {
   font-size: 0 !important;
   line-height: 0 !important;
@@ -1189,6 +1190,7 @@
  */
 .etskin-on .etskin-tray-alert::before,
 .etskin-on .etskin-tray-help::before,
+.etskin-on .etskin-tray-copilot::before,
 .etskin-on .etskin-tray-logout::before {
   content: "";
   position: absolute;
@@ -1216,6 +1218,28 @@
 
 .etskin-on .etskin-tray-logout::before {
   --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4 M16 17l5-5-5-5 M21 12H9'/%3E%3C/svg%3E");
+}
+
+/*
+ * Copilot's own navigation bar button, which etendo-skin-copilot.js asks the tray to dress as a
+ * chip. It is a plain SmartClient button rather than one of core's, so its cells are named after
+ * the baseStyle the module gave it and the rule above needs that name to blank the word; the
+ * artwork it asks for is hidden with every other chip's, which is just as well, since it points at
+ * a fixed /etendo/ path that is only right on a deployment served from that context.
+ */
+.etskin-on .etskin-tray-copilot::before {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 11.5a8.4 8.4 0 0 1-8.5 8.4 8.9 8.9 0 0 1-3.8-.8L3 21l1.9-5.3A8.2 8.2 0 0 1 4 11.5 8.4 8.4 0 0 1 12.5 3 8.4 8.4 0 0 1 21 11.5z'/%3E%3C/svg%3E");
+}
+
+/*
+ * Filled while the panel is on screen. The chip is the only thing in the tray that can say so, and
+ * saying it is what the floating window never had to: a window in front of the user announces
+ * itself, a docked panel is part of the furniture, and the control that opens it is where one
+ * looks to find out whether it is there.
+ */
+.etskin-on .etskin-tray-copilot-on {
+  background-color: var(--sk-primary);
+  --sk-icon-color: var(--sk-on-primary);
 }
 
 /*
@@ -4067,6 +4091,754 @@
   .etskin-on .etskin-kb-col {
     flex-basis: 224px;
   }
+}
+
+/* ----------------------------------------------------------- copilot dock */
+
+/*
+ * Copilot, docked. The panel is a member of the application row - the tab set gives up exactly the
+ * width the chat takes, and nothing floats over the window - so everything here sizes from the
+ * canvas it is drawn into and scrolls inside it. Every colour is a palette token, like the rest of
+ * the skin, which is most of the point of not being an iframe any more.
+ */
+
+.etskin-on .etskinCopCanvas {
+  background-color: var(--sk-surface);
+}
+
+.etskin-on .etskin-cop-root {
+  position: relative;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: var(--sk-font);
+  font-size: 13px;
+  color: var(--sk-text);
+  background-color: var(--sk-surface);
+  border-inline-start: 1px solid var(--sk-border);
+}
+
+/* ---- glyphs */
+
+.etskin-on .etskin-cop-root [class^="etskin-cop-i-"] {
+  display: block;
+  width: 15px;
+  height: 15px;
+  background-color: currentColor;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: 15px 15px;
+  mask-size: 15px 15px;
+}
+.etskin-on .etskin-cop-i-menu {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 7h16 M4 12h16 M4 17h16'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 7h16 M4 12h16 M4 17h16'/%3E%3C/svg%3E");
+}
+.etskin-on .etskin-cop-i-plus {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 5v14 M5 12h14'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 5v14 M5 12h14'/%3E%3C/svg%3E");
+}
+.etskin-on .etskin-cop-i-wide {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 7l-5 5 5 5 M15 7l5 5-5 5'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 7l-5 5 5 5 M15 7l5 5-5 5'/%3E%3C/svg%3E");
+}
+.etskin-on .etskin-cop-i-narrow {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 7l5 5-5 5 M19 7l-5 5 5 5'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 7l5 5-5 5 M19 7l-5 5 5 5'/%3E%3C/svg%3E");
+}
+.etskin-on .etskin-cop-i-close {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 6l12 12 M18 6L6 18'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 6l12 12 M18 6L6 18'/%3E%3C/svg%3E");
+}
+.etskin-on .etskin-cop-i-send {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 3L10 14 M21 3l-7 18-4-8-8-4z'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 3L10 14 M21 3l-7 18-4-8-8-4z'/%3E%3C/svg%3E");
+}
+.etskin-on .etskin-cop-i-attach {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 11l-8 8a4.5 4.5 0 0 1-6.4-6.4l8.2-8.2a3 3 0 0 1 4.3 4.3l-8.2 8.2a1.5 1.5 0 0 1-2.1-2.1L15 8'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 11l-8 8a4.5 4.5 0 0 1-6.4-6.4l8.2-8.2a3 3 0 0 1 4.3 4.3l-8.2 8.2a1.5 1.5 0 0 1-2.1-2.1L15 8'/%3E%3C/svg%3E");
+}
+.etskin-on .etskin-cop-i-search {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14z M20 20l-4.3-4.3'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14z M20 20l-4.3-4.3'/%3E%3C/svg%3E");
+}
+.etskin-on .etskin-cop-i-pencil {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 20h4L20 8l-4-4L4 16v4z'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 20h4L20 8l-4-4L4 16v4z'/%3E%3C/svg%3E");
+}
+.etskin-on .etskin-cop-i-archive {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 7h18v4H3z M5 11v9h14v-9 M10 15h4'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 7h18v4H3z M5 11v9h14v-9 M10 15h4'/%3E%3C/svg%3E");
+}
+.etskin-on .etskin-cop-i-trash {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 7h16 M9 7V4h6v3 M6 7l1 13h10l1-13'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 7h16 M9 7V4h6v3 M6 7l1 13h10l1-13'/%3E%3C/svg%3E");
+}
+.etskin-on .etskin-cop-i-restore {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 12a8 8 0 1 1-2.3-5.7 M20 4v5h-5'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 12a8 8 0 1 1-2.3-5.7 M20 4v5h-5'/%3E%3C/svg%3E");
+}
+.etskin-on .etskin-cop-i-check {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 13l4 4L19 7'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 13l4 4L19 7'/%3E%3C/svg%3E");
+}
+.etskin-on .etskin-cop-i-record {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 3h8l4 4v14H6z M14 3v4h4 M9 13h6 M9 17h4'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 3h8l4 4v14H6z M14 3v4h4 M9 13h6 M9 17h4'/%3E%3C/svg%3E");
+}
+.etskin-on .etskin-cop-star {
+  display: block;
+  width: 11px;
+  height: 11px;
+  background-color: currentColor;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: 11px 11px;
+  mask-size: 11px 11px;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23000'%3E%3Cpath d='M12 3l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.8 6.1 21l1.2-6.5L2.5 9.9 9.1 9z'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23000'%3E%3Cpath d='M12 3l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.8 6.1 21l1.2-6.5L2.5 9.9 9.1 9z'/%3E%3C/svg%3E");
+}
+.etskin-on .etskin-cop-caret {
+  display: block;
+  width: 11px;
+  height: 11px;
+  background-color: currentColor;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: 11px 11px;
+  mask-size: 11px 11px;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23000'%3E%3Cpath d='M9 6l6 6-6 6z'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23000'%3E%3Cpath d='M9 6l6 6-6 6z'/%3E%3C/svg%3E");
+}
+
+/* ---- conversation sidebar */
+
+/*
+ * The sidebar is an overlay while the panel is narrow and a column once it is wide, which is the
+ * same bargain the stock chat made between its two sizes. Sliding it in rather than swapping it
+ * keeps the composer and the log from reflowing under the user's hands.
+ */
+.etskin-on .etskin-cop-side {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  z-index: 3;
+  display: flex;
+  flex: 0 0 232px;
+  flex-direction: column;
+  gap: 8px;
+  width: 232px;
+  padding: 10px;
+  overflow: hidden;
+  background-color: var(--sk-band);
+  border-inline-end: 1px solid var(--sk-border);
+  transform: translateX(-104%);
+  transition: transform 150ms ease;
+}
+
+.etskin-on .etskin-cop-side-shown .etskin-cop-side {
+  transform: translateX(0);
+  box-shadow: var(--sk-shadow-md);
+}
+
+.etskin-on .etskin-cop-wide .etskin-cop-side {
+  position: relative;
+  transform: none;
+  box-shadow: none;
+}
+
+.etskin-on .etskin-cop-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: none;
+  background-color: var(--sk-canvas-tint);
+}
+
+.etskin-on .etskin-cop-side-shown .etskin-cop-scrim {
+  display: block;
+}
+
+.etskin-on .etskin-cop-wide .etskin-cop-scrim {
+  display: none;
+}
+
+.etskin-on .etskin-cop-side-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.etskin-on .etskin-cop-side-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--sk-text-faint);
+  text-transform: uppercase;
+}
+
+.etskin-on .etskin-cop-toggle {
+  padding: 2px 7px;
+  font: inherit;
+  font-size: 10px;
+  color: var(--sk-text-muted);
+  cursor: pointer;
+  background-color: transparent;
+  border: 1px solid var(--sk-border);
+  border-radius: 999px;
+}
+
+.etskin-on .etskin-cop-toggle-on {
+  color: var(--sk-on-primary);
+  background-color: var(--sk-primary);
+  border-color: var(--sk-primary);
+}
+
+.etskin-on .etskin-cop-assistants {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 132px;
+  overflow-y: auto;
+}
+
+.etskin-on .etskin-cop-assistant {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  font: inherit;
+  color: var(--sk-text);
+  text-align: start;
+  cursor: pointer;
+  background-color: transparent;
+  border: 0;
+  border-radius: var(--sk-radius-sm);
+}
+
+.etskin-on .etskin-cop-assistant:hover {
+  background-color: var(--sk-neutral-soft);
+}
+
+.etskin-on .etskin-cop-assistant-on {
+  color: var(--sk-primary);
+  background-color: var(--sk-primary-soft);
+}
+
+.etskin-on .etskin-cop-assistant-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.etskin-on .etskin-cop-assistant .etskin-cop-star {
+  flex: 0 0 auto;
+  margin-inline-start: auto;
+  color: var(--sk-warning);
+}
+
+.etskin-on .etskin-cop-new {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 10px;
+  font: inherit;
+  font-weight: 600;
+  color: var(--sk-on-primary);
+  cursor: pointer;
+  background-color: var(--sk-primary);
+  border: 0;
+  border-radius: var(--sk-radius-sm);
+}
+
+.etskin-on .etskin-cop-new:hover {
+  background-color: var(--sk-primary-hover);
+}
+
+.etskin-on .etskin-cop-search {
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  color: var(--sk-text-faint);
+  background-color: var(--sk-field-fill);
+  border: 1px solid var(--sk-border);
+  border-radius: var(--sk-radius-sm);
+}
+
+.etskin-on .etskin-cop-search:focus-within {
+  background-color: var(--sk-surface);
+  border-color: var(--sk-primary);
+  box-shadow: 0 0 0 3px var(--sk-focus-ring);
+}
+
+.etskin-on .etskin-cop-search-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 6px 0 6px 7px;
+  font: inherit;
+  color: var(--sk-text);
+  background-color: transparent;
+  border: 0;
+  outline: none;
+}
+
+.etskin-on .etskin-cop-convs {
+  flex: 1 1 auto;
+  overflow-y: auto;
+}
+
+.etskin-on .etskin-cop-conv {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  cursor: pointer;
+  border-radius: var(--sk-radius-sm);
+}
+
+.etskin-on .etskin-cop-conv:hover {
+  background-color: var(--sk-neutral-soft);
+}
+
+.etskin-on .etskin-cop-conv-on {
+  color: var(--sk-primary);
+  background-color: var(--sk-primary-soft);
+}
+
+.etskin-on .etskin-cop-conv-title {
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.etskin-on .etskin-cop-conv-tools {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+}
+
+/*
+ * The row tools stay out of the way until the pointer is on the row - a list of conversations
+ * should read as titles - and come back for the keyboard, which cannot hover.
+ */
+.etskin-on .etskin-cop-conv:hover .etskin-cop-conv-tools,
+.etskin-on .etskin-cop-conv-tools:focus-within {
+  opacity: 1;
+}
+
+.etskin-on .etskin-cop-dot {
+  flex: 0 0 auto;
+  width: 6px;
+  height: 6px;
+  background-color: var(--sk-primary);
+  border-radius: 999px;
+}
+
+.etskin-on .etskin-cop-rename {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 4px 6px;
+  font: inherit;
+  color: var(--sk-text);
+  background-color: var(--sk-surface);
+  border: 1px solid var(--sk-primary);
+  border-radius: var(--sk-radius-sm);
+  outline: none;
+}
+
+.etskin-on .etskin-cop-arch-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 6px 8px;
+  font: inherit;
+  font-size: 11px;
+  color: var(--sk-text-muted);
+  text-align: start;
+  cursor: pointer;
+  background-color: transparent;
+  border: 0;
+  border-top: 1px solid var(--sk-border-hairline);
+}
+
+.etskin-on .etskin-cop-arch-head .etskin-cop-caret {
+  transition: transform 120ms ease;
+}
+
+.etskin-on .etskin-cop-arch-open .etskin-cop-caret {
+  transform: rotate(90deg);
+}
+
+.etskin-on .etskin-cop-conv-archived {
+  color: var(--sk-text-muted);
+  cursor: default;
+}
+
+.etskin-on .etskin-cop-empty {
+  margin: 6px 8px;
+  font-size: 11px;
+  color: var(--sk-text-faint);
+}
+
+/* ---- main column */
+
+.etskin-on .etskin-cop-main {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.etskin-on .etskin-cop-head {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 4px;
+  padding: 7px 8px;
+  background-color: var(--sk-surface);
+  border-bottom: 1px solid var(--sk-border);
+}
+
+.etskin-on .etskin-cop-head-text {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  padding-inline-start: 2px;
+}
+
+.etskin-on .etskin-cop-head-title {
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.etskin-on .etskin-cop-head-sub {
+  overflow: hidden;
+  font-size: 11px;
+  color: var(--sk-text-faint);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.etskin-on .etskin-cop-icon {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  color: var(--sk-text-muted);
+  cursor: pointer;
+  background-color: transparent;
+  border: 0;
+  border-radius: var(--sk-radius-sm);
+}
+
+.etskin-on .etskin-cop-icon:hover {
+  color: var(--sk-text);
+  background-color: var(--sk-neutral-soft);
+}
+
+.etskin-on .etskin-cop-send {
+  color: var(--sk-on-primary);
+  background-color: var(--sk-primary);
+}
+
+.etskin-on .etskin-cop-send:hover {
+  color: var(--sk-on-primary);
+  background-color: var(--sk-primary-hover);
+}
+
+/* The composer stays usable while an answer streams, so the button says "working", not "gone". */
+.etskin-on .etskin-cop-send-busy {
+  opacity: 0.5;
+}
+
+/* ---- log */
+
+.etskin-on .etskin-cop-log {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  overflow-y: auto;
+  background-color: var(--sk-canvas-tint);
+}
+
+.etskin-on .etskin-cop-msg {
+  display: flex;
+  flex-direction: column;
+  max-width: 88%;
+}
+
+.etskin-on .etskin-cop-msg-user {
+  align-self: flex-end;
+  align-items: flex-end;
+}
+
+.etskin-on .etskin-cop-bubble {
+  padding: 8px 11px;
+  overflow-wrap: break-word;
+  background-color: var(--sk-surface);
+  border: 1px solid var(--sk-border-hairline);
+  border-radius: var(--sk-radius-lg);
+  box-shadow: var(--sk-shadow-sm);
+}
+
+.etskin-on .etskin-cop-msg-user .etskin-cop-bubble {
+  color: var(--sk-text);
+  background-color: var(--sk-primary-soft);
+  border-color: var(--sk-primary-soft);
+  box-shadow: none;
+}
+
+.etskin-on .etskin-cop-msg-error .etskin-cop-bubble {
+  color: var(--sk-danger);
+  border-color: var(--sk-danger);
+}
+
+.etskin-on .etskin-cop-bubble p {
+  margin: 0 0 6px;
+}
+
+.etskin-on .etskin-cop-bubble p:last-child {
+  margin-bottom: 0;
+}
+
+.etskin-on .etskin-cop-heading {
+  font-weight: 600;
+}
+
+.etskin-on .etskin-cop-list {
+  margin: 0 0 6px;
+  padding-inline-start: 18px;
+}
+
+.etskin-on .etskin-cop-link {
+  color: var(--sk-primary);
+}
+
+.etskin-on .etskin-cop-code {
+  padding: 1px 4px;
+  font-family: ui-monospace, "SFMono-Regular", "Menlo", monospace;
+  font-size: 12px;
+  background-color: var(--sk-field-fill);
+  border-radius: var(--sk-radius-sm);
+}
+
+.etskin-on .etskin-cop-block {
+  margin: 6px 0;
+  overflow: hidden;
+  background-color: var(--sk-field-fill);
+  border: 1px solid var(--sk-border-hairline);
+  border-radius: var(--sk-radius-sm);
+}
+
+.etskin-on .etskin-cop-block-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 3px 6px 3px 8px;
+  font-size: 10px;
+  color: var(--sk-text-faint);
+  background-color: var(--sk-band);
+}
+
+.etskin-on .etskin-cop-block-copy {
+  padding: 1px 6px;
+  font: inherit;
+  font-size: 10px;
+  color: var(--sk-text-muted);
+  cursor: pointer;
+  background-color: transparent;
+  border: 1px solid var(--sk-border);
+  border-radius: var(--sk-radius-sm);
+}
+
+.etskin-on .etskin-cop-block pre {
+  margin: 0;
+  padding: 8px;
+  overflow-x: auto;
+  font-family: ui-monospace, "SFMono-Regular", "Menlo", monospace;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.etskin-on .etskin-cop-status {
+  align-self: flex-start;
+  font-size: 12px;
+  color: var(--sk-text-muted);
+}
+
+.etskin-on .etskin-cop-time {
+  padding: 2px 2px 0;
+  font-size: 10px;
+  color: var(--sk-text-faint);
+}
+
+.etskin-on .etskin-cop-ctx-tag {
+  padding: 0 2px 2px;
+  font-size: 10px;
+  color: var(--sk-primary);
+}
+
+.etskin-on .etskin-cop-msg-files {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding-top: 4px;
+}
+
+.etskin-on .etskin-cop-welcome {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 24px;
+  text-align: center;
+}
+
+.etskin-on .etskin-cop-welcome-mark {
+  width: 34px;
+  height: 34px;
+  margin-bottom: 4px;
+  color: var(--sk-primary);
+  background-color: currentColor;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: 34px 34px;
+  mask-size: 34px 34px;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 5h16v11H8l-4 4z M9 10h.01 M13 10h.01 M17 10h.01'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 5h16v11H8l-4 4z M9 10h.01 M13 10h.01 M17 10h.01'/%3E%3C/svg%3E");
+}
+
+.etskin-on .etskin-cop-welcome-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.etskin-on .etskin-cop-welcome-text {
+  margin: 0;
+  max-width: 30ch;
+  color: var(--sk-text-muted);
+}
+
+/* ---- composer */
+
+.etskin-on .etskin-cop-foot {
+  flex: 0 0 auto;
+  padding: 8px;
+  background-color: var(--sk-surface);
+  border-top: 1px solid var(--sk-border);
+}
+
+.etskin-on .etskin-cop-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding-bottom: 6px;
+}
+
+/*
+ * The context chip is the honest half of the docked panel: the question carries the record the
+ * user was looking at, so the panel says which record, and lets it be taken off.
+ */
+.etskin-on .etskin-cop-ctx,
+.etskin-on .etskin-cop-file-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  padding: 2px 4px 2px 7px;
+  overflow: hidden;
+  font-size: 11px;
+  color: var(--sk-primary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background-color: var(--sk-primary-soft);
+  border-radius: 999px;
+}
+
+.etskin-on .etskin-cop-file-chip {
+  color: var(--sk-text-muted);
+  background-color: var(--sk-neutral-soft);
+}
+
+.etskin-on .etskin-cop-ctx .etskin-cop-icon,
+.etskin-on .etskin-cop-file-chip .etskin-cop-icon {
+  width: 16px;
+  height: 16px;
+  color: inherit;
+}
+
+.etskin-on .etskin-cop-ctx .etskin-cop-icon [class^="etskin-cop-i-"],
+.etskin-on .etskin-cop-file-chip .etskin-cop-icon [class^="etskin-cop-i-"] {
+  width: 10px;
+  height: 10px;
+  -webkit-mask-size: 10px 10px;
+  mask-size: 10px 10px;
+}
+
+.etskin-on .etskin-cop-notice {
+  margin: 0 0 6px;
+  font-size: 11px;
+  color: var(--sk-danger);
+}
+
+.etskin-on .etskin-cop-compose {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  padding: 4px;
+  background-color: var(--sk-field-fill);
+  border: 1px solid var(--sk-border);
+  border-radius: var(--sk-radius);
+}
+
+.etskin-on .etskin-cop-compose:focus-within {
+  background-color: var(--sk-surface);
+  border-color: var(--sk-primary);
+  box-shadow: 0 0 0 3px var(--sk-focus-ring);
+}
+
+.etskin-on .etskin-cop-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 26px;
+  max-height: 160px;
+  padding: 5px 6px;
+  font: inherit;
+  color: var(--sk-text);
+  resize: none;
+  background-color: transparent;
+  border: 0;
+  outline: none;
+}
+
+/* The dialog is opened by the paperclip; the field itself has nothing to show. */
+.etskin-on .etskin-cop-fileinput {
+  display: none;
 }
 
 /* ----------------------------------------------------------- accessibility */

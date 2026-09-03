@@ -537,9 +537,36 @@
     applyCurrent(currentPath);
   }
 
-  // Keeps the panel in step with the tab strip, so closing a tab or switching to one opened from
-  // somewhere else does not leave the highlight behind. Matching is by title because that is all a
-  // tab and a menu node reliably share.
+  // The path of the first menu node that opens the given window, wherever in the tree it sits.
+  function pathOfWindow(list, prefix, windowId) {
+    var i, node, path, found;
+    for (i = 0; i < list.length; i++) {
+      node = list[i];
+      path = prefix === '' ? String(i) : prefix + '.' + i;
+      if (node.windowId && String(node.windowId) === windowId) {
+        return path;
+      }
+      if (node.submenu && node.submenu.length) {
+        found = pathOfWindow(node.submenu, path, windowId);
+        if (found) {
+          return found;
+        }
+      }
+    }
+    return null;
+  }
+
+  /*
+   * Keeps the panel in step with the tab strip, so closing a tab or switching to one opened from
+   * somewhere else does not leave the highlight behind.
+   *
+   * The window the tab holds is what identifies it, not the label on it. A tab is renamed the
+   * moment a record is selected in it - "Sales Invoice" becomes "Sales Invoice - 1000367 - 03-0..."
+   * complete with the ellipsis the strip needs to fit it - and matching that against menu titles
+   * found nothing, so the panel and the rail both went blank on exactly the screens a user spends
+   * their day on. The title is still the fallback, for a tab that is not a window: the workspace,
+   * and whatever a process definition opens.
+   */
   function syncCurrent() {
     var root = panel();
     if (!root || !OB.MainView || !OB.MainView.TabSet) {
@@ -548,11 +575,16 @@
     var tab = OB.MainView.TabSet.getSelectedTab
       ? OB.MainView.TabSet.getSelectedTab()
       : null;
-    var title = tab && (tab.title || tab.tabTitle);
+    var pane = tab && tab.pane;
+    var windowId = pane && pane.windowId ? String(pane.windowId) : null;
+    var title = (pane && pane.tabTitle) || (tab && (tab.title || tab.tabTitle));
     var rows = root.querySelectorAll('.etskin-nav-row');
     var i, labelEl;
     currentPath = null;
-    for (i = 0; title && i < rows.length; i++) {
+    if (windowId && menuData) {
+      currentPath = pathOfWindow(menuData, '', windowId);
+    }
+    for (i = 0; !currentPath && title && i < rows.length; i++) {
       labelEl = rows[i].querySelector('.etskin-nav-label');
       if (labelEl && labelEl.textContent === title) {
         currentPath = rows[i].getAttribute('data-p');
