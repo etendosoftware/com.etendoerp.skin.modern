@@ -50,10 +50,6 @@
   // role's own menu carries it - the board never invents access to a window the user has not got.
   var SALES_ORDER_WINDOW = '143';
 
-  // The document status reference behind C_Order.DocStatus. Read to put the AD's own names on the
-  // column headers instead of names restated here.
-  var STATUS_REFERENCE = 'FF80818130217A350130218D802B0011';
-
   /*
    * The four statuses a sales order actually lives in. The other twenty-one values of the
    * reference belong to other documents or to states no sales order rests in, so they are not
@@ -77,7 +73,6 @@
     canvas: null,
     bound: false,
     columns: [], // { key, name, accent, rows, total, loaded, loading, failed, droppable }
-    statusNames: null,
     target: null, // the Sales Order window, if the role has it
     moves: [], // { id, documentNo, from, to }
     drag: null,
@@ -146,11 +141,44 @@
     );
   }
 
+  /*
+   * The four lifecycle names are the module's own strings, routed through the same label hook as
+   * every other word on this board. They were read from the AD reference list until that turned
+   * out to be unreachable: the datasource layer serves an AD table only to a role granted the
+   * window the table lives in, and the reply to this board was
+   *   OBSecurityException: Entity ADList is not accessible by this role/user
+   * even for an instance administrator. A fetch that is always refused is a security exception in
+   * the server log on every open, in exchange for four words that were already written here.
+   */
   function statusName(key, fallback) {
-    if (state.statusNames && state.statusNames[key]) {
-      return state.statusNames[key];
+    return skinLabel('status' + key, fallback);
+  }
+
+  /*
+   * A code the board draws away from its own column headers - in a staged move line, or on a card
+   * that landed in the Other column - still gets the name the header would have given it, so a
+   * staged move reads Draft to Booked and not DR to CO. A code from outside the four is drawn as
+   * itself: it is a status no column here is named after, and inventing a word for it would be
+   * worse than showing the one the document actually carries.
+   */
+  function statusLabel(value) {
+    var i;
+    for (i = 0; i < COLUMNS.length; i++) {
+      if (COLUMNS[i].key === value) {
+        return statusName(value, COLUMNS[i].fallback);
+      }
     }
-    return fallback;
+    return statusName(value, value);
+  }
+
+  // The same badge the grids draw, from the same tone map, so a status cannot be one colour here
+  // and another in the window a card opens.
+  function badge(value) {
+    var label = statusLabel(value);
+    if (!OB.ETSkin || !OB.ETSkin.statusBadge) {
+      return esc(label);
+    }
+    return OB.ETSkin.statusBadge(value, label);
   }
 
   // ------------------------------------------------------------------- data
@@ -285,36 +313,6 @@
       column.loaded = column.loaded + rows.length;
       column.total = typeof response.totalRows === 'number' ? response.totalRows : column.loaded;
       paint();
-    });
-  }
-
-  /*
-   * The column names come from the AD's own reference list rather than from names written here, so
-   * an instance whose session is in Spanish reads Borrador and Reservado on the headers instead of
-   * Draft and Booked. If the request fails the fallbacks stand and the board still opens: a header
-   * in the wrong language is a blemish, a board that will not open is a bug.
-   */
-  function resolveStatusNames(done) {
-    request('ADList', {
-      _operationType: 'fetch',
-      _startRow: 0,
-      _endRow: 50,
-      _selectedProperties: 'id,searchKey,name',
-      criteria: JSON.stringify({
-        fieldName: 'reference', operator: 'equals', value: STATUS_REFERENCE
-      })
-    }, function (response) {
-      var rows = response && response.data ? response.data : [];
-      var names = {};
-      var i, row;
-      for (i = 0; i < rows.length; i++) {
-        row = rows[i];
-        if (row.searchKey && row.name) {
-          names[row.searchKey] = row.name;
-        }
-      }
-      state.statusNames = names;
-      done();
     });
   }
 
@@ -512,15 +510,22 @@
       (row.currency ? ' <i>' + esc(row.currency) + '</i>' : '') + '</span></div>';
     html += '<div class="etskin-kb-partner">' + esc(row.partner) + '</div>';
     html += '<div class="etskin-kb-meta"><span>' + esc(dateText(row.date)) + '</span>';
+    /*
+     * The four lifecycle columns are their own label - a badge on every card in them would say
+     * what the header above it already says. The Other column is not: it holds whatever statuses
+     * the instance turned out to have, and without the badge a card in it does not say which.
+     */
+    if (columnKey === OTHER) {
+      html += badge(row.status);
+    }
     if (row.status === 'CO' && !row.delivered) {
       html += '<span class="etskin-kb-chip">' +
         esc(skinLabel('boardUndelivered', 'Not delivered')) + '</span>';
     }
     html += '</div>';
     if (move) {
-      html += '<div class="etskin-kb-move">' +
-        esc(statusName(move.from, move.from)) + ' → ' + esc(statusName(move.to, move.to)) +
-        '</div>';
+      html += '<div class="etskin-kb-move">' + badge(move.from) +
+        '<span class="etskin-kb-move-arrow">→</span>' + badge(move.to) + '</div>';
     }
     return html + '</div>';
   }
@@ -891,11 +896,7 @@
         state.target = resolveTarget();
         this.setContents(shellHtml());
         bind();
-        if (state.statusNames) {
-          loadAll();
-        } else {
-          resolveStatusNames(loadAll);
-        }
+        loadAll();
       },
 
       destroy: function () {
