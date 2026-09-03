@@ -1,0 +1,87 @@
+{
+  "version": 1,
+  "source": "Design and UX critique by Fable 5.1, recorded in verify/feedback.md",
+  "note": "Thresholds only. The assertions that read them live in check-dom.mjs and check-source.mjs, and the measurements they run against are recorded by capture.js.",
+  "screens": ["grid", "form", "rail", "login"],
+  "thresholds": {
+    "F1": {
+      "maxIconsBeforeRightGroup": 10,
+      "exactPrimaryButtons": 1,
+      "maxRightEdge": 1420,
+      "minDividers": 2,
+      "maxIntraGroupPitch": 36
+    },
+    "F2": {
+      "maxInputBorderLeft": 0,
+      "minInputHeight": 32,
+      "columnPitchTolerance": 8,
+      "requiredHueRange": [0, 12],
+      "linkGlyphRestOpacity": 0,
+      "maxDecorationsPerFieldAtRest": 1
+    },
+    "F3": {
+      "maxLargestNonWhiteRegionShare": 15,
+      "maxBandHeight": 48,
+      "maxGutterWidth": 12
+    },
+    "F4": {
+      "headerToCellAlignToleranceX": 4,
+      "maxHeaderWeight": 600,
+      "minRowHeight": 36,
+      "maxNonDataLeftColumnsWidth": 40,
+      "maxSeparatorAlpha": 0.08,
+      "maxSeparatorWidth": 1
+    },
+    "F5": {
+      "maxBannerHeight": 28,
+      "maxBannerWeight": 400,
+      "maxFilterBadgeSize": 8
+    },
+    "F6": {
+      "minFormPaneShareUnsaved": 60,
+      "maxChildPaneHeightUnsaved": 96,
+      "minChildPaneShareAfterSave": 40
+    },
+    "F7": {
+      "maxTopBarTextSize": 16,
+      "maxTopBarHeight": 56,
+      "maxLogoHeight": 32,
+      "minRecordTitleSize": 18
+    },
+    "F8": {
+      "minDistinctSectionIcons": 7,
+      "minItemHeight": 40,
+      "requireDistinctRailTiles": true,
+      "requireFilledActiveInBothModes": true,
+      "requireSearchPlaceholder": true
+    },
+    "F9": {
+      "minSectionBandHeight": 40,
+      "maxChevronInsetFromCardEdge": 32,
+      "maxCollapsedBandGap": 12
+    },
+    "F10": {
+      "maxDistinctFontSizes": 5,
+      "maxUppercaseLabelLength": 3,
+      "allowWeight700OnlyOn": ["login"]
+    },
+    "F11": {
+      "allowTrayContainerBorder": false,
+      "maxTrayButtons": 5,
+      "trayButtonSize": 40,
+      "trayButtonSizeTolerance": 2,
+      "minTrayGap": 6
+    },
+    "F12": {
+      "maxYellowElementHeight": 48,
+      "consistentActiveMarkerWidth": 3
+    },
+    "F13": {
+      "requirePrimaryMatchesAppToken": true,
+      "minPanelContentElements": 1,
+      "maxPanelGradientStops": 2,
+      "allowPanelBlur": false,
+      "maxFooterSize": 12
+    }
+  }
+}
