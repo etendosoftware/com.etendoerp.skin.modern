@@ -586,7 +586,7 @@
  * buttons are sized to their own title, unlike the workspace rows.
  */
 .etskin-on .OBTabBarChild {
-  background-color: color-mix(in srgb, var(--sk-canvas) 50%, var(--sk-surface));
+  background-color: color-mix(in srgb, var(--sk-canvas) 55%, var(--sk-surface));
   background-image: none;
   border-bottom: 1px solid var(--sk-border);
   text-transform: none;
@@ -607,16 +607,20 @@
   letter-spacing: 0;
   /* --sk-text-muted is tuned for supporting text; a tab label is a control and has to stay
      readable at 13px, so it is the text colour held back rather than a separate grey. */
-  color: color-mix(in srgb, var(--sk-text) 72%, transparent);
+  color: color-mix(in srgb, var(--sk-text) 78%, transparent);
   background: none;
   background-image: none;
   border: 0 none;
   padding: 0 16px;
 }
 
+/*
+ * The selected child tab is marked by its fill, not by its type: same colour and same weight as
+ * its neighbours, which is what the React skin does. The window tabs above still take a weight
+ * step, because there the selected tab is a different shape and carries the accent line.
+ */
 .etskin-on [class^="OBTabBarButtonChildTitle"][class*="Selected"] {
-  color: var(--sk-primary);
-  font-weight: 600;
+  color: var(--sk-text);
 }
 
 .etskin-on [class^="OBTabBarButtonMainTitle"][class*="Selected"] {
@@ -648,10 +652,10 @@
 .etskin-on [class^="OBTabBarButtonMainTop"][class*="Selected"] {
   background-color: var(--sk-surface);
   border-radius: var(--sk-radius-lg) var(--sk-radius-lg) 0 0;
-  /* The accent along the top edge, as in the React skin. An inset shadow rather than a border,
-     because SmartClient has already written width and height onto this element inline and a
-     border would grow the box past them. */
-  box-shadow: inset 0 3px 0 0 var(--sk-primary);
+  /* The accent along the bottom edge, where the React skin puts it: the tab is underlined against
+     the sheet rather than capped. An inset shadow rather than a border, because SmartClient has
+     already written width and height onto this element inline and a border would grow the box. */
+  box-shadow: inset 0 -2px 0 0 var(--sk-primary);
 }
 
 .etskin-on [class^="OBTabBarButtonMainTop"][class*="Over"]:not([class*="Selected"]) {
@@ -669,21 +673,20 @@
 .etskin-on [class^="OBTabBarButtonChildTop"]::before {
   content: "";
   position: absolute;
-  inset: 5px 2px;
+  inset: 4px 2px;
   border-radius: 999px;
-  background-color: transparent;
-  border: 1px solid transparent;
-  transition: background-color 120ms ease, border-color 120ms ease;
+  /* Three fills over one band, lightest wins - the same three steps the React skin uses. An
+     unselected tab is still a chip, not bare text, so the strip reads as a set. */
+  background-color: color-mix(in srgb, var(--sk-primary) 8%, var(--sk-surface));
+  transition: background-color 120ms ease;
 }
 
 .etskin-on [class^="OBTabBarButtonChildTop"][class*="Over"]::before {
-  background-color: var(--sk-neutral-soft);
+  background-color: color-mix(in srgb, var(--sk-primary) 14%, var(--sk-surface));
 }
 
 .etskin-on [class^="OBTabBarButtonChildTop"][class*="Selected"]::before {
   background-color: var(--sk-surface);
-  border-color: var(--sk-border);
-  box-shadow: 0 1px 2px color-mix(in srgb, var(--sk-text) 10%, transparent);
 }
 
 /*

@@ -136,6 +136,9 @@ framework is counting on, so the sheet-on-a-desk look is built out of things tha
   buttons are sized to their own title. Even there the pill is a `::before` inset inside the
   button, because the button itself carries an inline `width` and `height` SmartClient measured -
   a margin would move it and a border would grow it.
+- The two strips are marked differently, following the reference: the selected *window* tab is a
+  white sheet with the accent along its bottom edge, while the selected *child* tab is marked only
+  by being the lightest of three fills over the band. Neither uses a colour change on the label.
 
 ## Conventions the stylesheet follows
 
