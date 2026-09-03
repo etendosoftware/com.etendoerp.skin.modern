@@ -1377,6 +1377,446 @@
   }
 }
 
+/* ------------------------------------------------------- side navigation */
+
+/*
+ * The panel etendo-skin-nav.js builds when ETSKIN_Navigation is 'sidebar'. It is plain markup
+ * inside one isc.Canvas, so unlike the rest of this file it is styled with ordinary CSS layout
+ * rather than around SmartClient's inline geometry - the only thing SmartClient decides here is
+ * the width of the canvas.
+ *
+ * The class names are ours, so no attribute matching and no specificity games are needed. They
+ * still live under .etskin-on for one reason: if the skin is off the script never runs, and a
+ * stray .etskin-nav rule would then be dead weight the browser still has to match.
+ */
+
+.etskin-on .etskin-nav {
+  /* The canvas handle is absolutely positioned and sized by SmartClient; this fills it. */
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-family: var(--sk-font);
+  background-color: var(--sk-surface);
+  border-inline-end: 1px solid var(--sk-border);
+}
+
+/* -------------------------------------------------------------- nav head */
+
+.etskin-on .etskin-nav-head {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 8px;
+}
+
+.etskin-on .etskin-nav-search {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  height: 34px;
+  padding-inline: 10px;
+  background-color: var(--sk-neutral-softer);
+  border: 1px solid var(--sk-border);
+  /* The reference uses a full pill here, and it is the one control in the panel that is not a
+     rectangle - which is what makes it read as a search box without a caption. */
+  border-radius: 999px;
+  transition: border-color 130ms ease, box-shadow 130ms ease, background-color 130ms ease;
+}
+
+.etskin-on .etskin-nav-search:focus-within {
+  background-color: var(--sk-surface);
+  border-color: var(--sk-primary);
+  box-shadow: 0 0 0 3px var(--sk-focus-ring);
+}
+
+.etskin-on .etskin-nav-search-icon {
+  flex: 0 0 auto;
+  width: 15px;
+  height: 15px;
+  margin-inline-end: 7px;
+  background-color: var(--sk-text-faint);
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: 15px 15px;
+  mask-size: 15px 15px;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14z M20 20l-4.3-4.3'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14z M20 20l-4.3-4.3'/%3E%3C/svg%3E");
+}
+
+.etskin-on .etskin-nav-search-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: var(--sk-font);
+  font-size: 13px;
+  color: var(--sk-text);
+  background: transparent;
+  border: 0 none;
+  outline: none;
+}
+
+.etskin-on .etskin-nav-toggle {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background-color: var(--sk-text-faint);
+  border: 0 none;
+  border-radius: var(--sk-radius-sm);
+  cursor: pointer;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: 17px 17px;
+  mask-size: 17px 17px;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 5h18v14H3z M9 5v14'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 5h18v14H3z M9 5v14'/%3E%3C/svg%3E");
+}
+
+.etskin-on .etskin-nav-toggle:hover {
+  background-color: var(--sk-text);
+}
+
+/* -------------------------------------------------------------- nav body */
+
+.etskin-on .etskin-nav-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding-bottom: 12px;
+}
+
+/* -------------------------------------------------------------- recents */
+
+.etskin-on .etskin-nav-recents {
+  padding: 2px 8px 10px 8px;
+}
+
+.etskin-on .etskin-nav-recents-title,
+.etskin-on .etskin-nav-section-title {
+  padding: 4px 8px 6px 8px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--sk-text-faint);
+}
+
+.etskin-on .etskin-nav-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding-inline: 8px;
+}
+
+.etskin-on .etskin-nav-chip {
+  max-width: 100%;
+  height: 24px;
+  padding: 0 9px;
+  font-family: var(--sk-font);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 22px;
+  color: var(--sk-text-muted);
+  background-color: var(--sk-neutral-soft);
+  border: 1px solid var(--sk-border);
+  border-radius: 999px;
+  cursor: pointer;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  transition: background-color 130ms ease, color 130ms ease, border-color 130ms ease;
+}
+
+.etskin-on .etskin-nav-chip:hover {
+  color: var(--sk-primary);
+  background-color: var(--sk-primary-soft);
+  border-color: color-mix(in srgb, var(--sk-primary) 35%, transparent);
+}
+
+/* ----------------------------------------------------------------- rows */
+
+.etskin-on .etskin-nav-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: calc(100% - 16px);
+  height: 32px;
+  /* --d is the node's depth, written inline by the script. One expression covers all four
+     levels, so no per-level selectors. */
+  padding-inline-start: calc(9px + var(--d) * 13px);
+  padding-inline-end: 8px;
+  margin-inline: 8px;
+  font-family: var(--sk-font);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+  text-align: start;
+  color: var(--sk-text);
+  background: transparent;
+  border: 0 none;
+  border-radius: var(--sk-radius-sm);
+  cursor: pointer;
+  transition: background-color 110ms ease, color 110ms ease;
+}
+
+.etskin-on .etskin-nav-row:hover {
+  background-color: var(--sk-neutral-soft);
+}
+
+.etskin-on .etskin-nav-row:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--sk-focus-ring);
+}
+
+.etskin-on .etskin-nav-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/*
+ * The selected row is the one place in the panel that carries the primary colour as a fill. The
+ * icon rides --sk-icon-color rather than a hardcoded white, so it flips with the label when the
+ * palette's primary is light enough to need dark text on it.
+ */
+.etskin-on .etskin-nav-row.etskin-nav-current,
+.etskin-on .etskin-nav-row.etskin-nav-current:hover {
+  --sk-icon-color: var(--sk-on-primary);
+  color: var(--sk-on-primary);
+  background-color: var(--sk-primary);
+}
+
+/* A folder holding the open view is tinted rather than filled, so only one row reads as selected. */
+.etskin-on .etskin-nav-group:has(.etskin-nav-current) > .etskin-nav-row-folder {
+  color: var(--sk-primary);
+}
+
+/* ---------------------------------------------------------------- icons */
+
+.etskin-on .etskin-nav-icon {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  background-color: var(--sk-icon-color);
+  opacity: 0.75;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: 16px 16px;
+  mask-size: 16px 16px;
+  -webkit-mask-image: var(--sk-icon);
+  mask-image: var(--sk-icon);
+}
+
+.etskin-on .etskin-nav-current .etskin-nav-icon {
+  opacity: 1;
+}
+
+/*
+ * Per section artwork, when a provider supplies it. It is a real image rather than a masked shape,
+ * so it keeps its own colours and is left alone by the palette - which is the point of shipping
+ * artwork instead of a glyph.
+ */
+.etskin-on .etskin-nav-art {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+}
+
+.etskin-on .etskin-nav-icon-folder {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 7h5l2 2h11v10H3z'/%3E%3C/svg%3E");
+}
+
+.etskin-on .etskin-nav-icon-window {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 5h18v14H3z M3 9h18'/%3E%3C/svg%3E");
+}
+
+.etskin-on .etskin-nav-icon-report {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 3h9l3 3v15H6z M15 3v4h4 M9 12h6 M9 16h5'/%3E%3C/svg%3E");
+}
+
+.etskin-on .etskin-nav-icon-process {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 5l10 7-10 7z'/%3E%3C/svg%3E");
+}
+
+.etskin-on .etskin-nav-icon-form {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 4h14v16H5z M9 9h6 M9 13h6 M9 17h3'/%3E%3C/svg%3E");
+}
+
+.etskin-on .etskin-nav-icon-view {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 12c3-5 17-5 20 0-3 5-17 5-20 0z M12 15a3 3 0 1 1 0-6 3 3 0 0 1 0 6z'/%3E%3C/svg%3E");
+}
+
+.etskin-on .etskin-nav-icon-external {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14 4h6v6 M20 4l-9 9 M18 13v7H4V6h7'/%3E%3C/svg%3E");
+}
+
+.etskin-on .etskin-nav-chevron {
+  flex: 0 0 auto;
+  width: 13px;
+  height: 13px;
+  background-color: var(--sk-icon-color);
+  opacity: 0.45;
+  transition: transform 140ms ease;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: 13px 13px;
+  mask-size: 13px 13px;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 6l6 6-6 6'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 6l6 6-6 6'/%3E%3C/svg%3E");
+}
+
+.etskin-on .etskin-nav-open > .etskin-nav-row .etskin-nav-chevron {
+  transform: rotate(90deg);
+}
+
+/* ------------------------------------------------------- open and filter */
+
+.etskin-on .etskin-nav-sub {
+  display: none;
+}
+
+.etskin-on .etskin-nav-group.etskin-nav-open > .etskin-nav-sub {
+  display: block;
+}
+
+/*
+ * While the box has text in it every subtree is open, so a match four levels down is visible
+ * without the user expanding anything, and every group with no match anywhere under it is out of
+ * the flow. Clearing the box drops both classes and the panel is back to whatever the user had
+ * expanded - the open state was never thrown away.
+ */
+.etskin-on .etskin-nav-filtering .etskin-nav-sub {
+  display: block;
+}
+
+/* Every subtree is open while filtering, so no chevron may still be pointing at a closed one. */
+.etskin-on .etskin-nav-filtering .etskin-nav-chevron {
+  transform: rotate(90deg);
+}
+
+.etskin-on .etskin-nav-group.etskin-nav-off {
+  display: none;
+}
+
+/* ------------------------------------------------------------- collapsed */
+
+/*
+ * At 44px there is no honest way to show 277 rows: an icon rail would be four levels of identical
+ * glyphs with no titles. So collapsing hides the tree outright and leaves the two controls that
+ * can bring it back - the toggle, and the search box, which expands the panel and takes focus.
+ */
+.etskin-on .etskin-nav-collapsed .etskin-nav-head {
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 6px;
+}
+
+.etskin-on .etskin-nav-collapsed .etskin-nav-search {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+  padding-inline: 0;
+  justify-content: center;
+  /* Square off the pill: at 32px wide it would otherwise be a lone circle next to the toggle. */
+  border-radius: var(--sk-radius-sm);
+  cursor: pointer;
+}
+
+.etskin-on .etskin-nav-collapsed .etskin-nav-search-icon {
+  margin-inline-end: 0;
+}
+
+.etskin-on .etskin-nav-collapsed .etskin-nav-search-input,
+.etskin-on .etskin-nav-collapsed .etskin-nav-body {
+  display: none;
+}
+
+.etskin-on .etskin-nav-collapsed .etskin-nav-toggle {
+  transform: scaleX(-1);
+}
+
+/* ------------------------------------------------------------------ rail */
+
+/*
+ * Collapsed, the panel is the top level of the menu and nothing else. Railing the whole tree would
+ * be four levels of glyphs with no titles; railing the sections is a real index - nine targets,
+ * each of which expands the panel onto itself.
+ *
+ * The mark on each tile is a monogram taken from the section title, because a folder node in the
+ * menu carries a translated title and no id, so there is no key to hang shipped artwork on. It is
+ * replaced by an <img> for any section a provider does supply, and the tile is sized for both.
+ */
+.etskin-on .etskin-nav-rail {
+  display: none;
+}
+
+.etskin-on .etskin-nav-collapsed .etskin-nav-rail {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0 12px 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.etskin-on .etskin-nav-tile {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  font-family: var(--sk-font);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--sk-text-muted);
+  background-color: var(--sk-neutral-soft);
+  border: 0 none;
+  border-radius: var(--sk-radius-sm);
+  cursor: pointer;
+  transition: background-color 130ms ease, color 130ms ease;
+}
+
+.etskin-on .etskin-nav-tile:hover {
+  color: var(--sk-primary);
+  background-color: var(--sk-primary-soft);
+}
+
+.etskin-on .etskin-nav-tile.etskin-nav-tile-current,
+.etskin-on .etskin-nav-tile.etskin-nav-tile-current:hover {
+  color: var(--sk-on-primary);
+  background-color: var(--sk-primary);
+}
+
+.etskin-on .etskin-nav-tile .etskin-nav-art {
+  width: 20px;
+  height: 20px;
+}
+
 /* ----------------------------------------------------------- accessibility */
 
 @media (prefers-reduced-motion: reduce) {
