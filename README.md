@@ -171,6 +171,19 @@ The markup is untouched: the `LOADING...` string is hardcoded English in `index.
 it through `content:` would trade an ugly translated string for an untranslatable one. It is hidden
 instead, and the bar carries the meaning.
 
+The same art shows up a second time, inside the application: opening a window, switching to a tab
+whose pane has not been built, the calendar and the branding widget all call
+`OB.Utilities.createLoadingLayout`, which puts a label next to
+`OB.Styles.LoadingPrompt.loadingImage` — the very GIF `index.jsp` used. That is handled in the same
+place, by matching the `<img>` on its file name and replacing it with a 1x1 transparent GIF through
+`content:`, which empties the element while leaving a box to paint the same bar on. Replacing it
+rather than hiding it matters: `visibility: hidden` would take the background with it. Doing it in
+JS was the alternative, but that would mean overriding a core function
+`com.smf.smartclient.boostedui` already overrides.
+
+There the label is kept — it is `OBUIAPP_LOADING`, so unlike the boot screen's hardcoded string it
+is translated, and it is the only thing on that pane a screen reader can read.
+
 ## Conventions the stylesheet follows
 
 - **Attribute selectors over class lists.** SmartClient class names carry combinatorial state
