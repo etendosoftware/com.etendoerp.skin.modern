@@ -53,6 +53,7 @@ public class SkinComponentProvider extends BaseComponentProvider {
     globalResources.add(createStaticResource(WEB_PATH + "js/etendo-skin-topbar.js", false));
     globalResources.add(createStaticResource(WEB_PATH + "js/etendo-skin-toolbar.js", false));
     globalResources.add(createStaticResource(WEB_PATH + "js/etendo-skin-form.js", false));
+    globalResources.add(createStaticResource(WEB_PATH + "js/etendo-skin-grid.js", false));
 
     return globalResources;
   }

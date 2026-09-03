@@ -208,8 +208,18 @@ async function etskinCapture(screen) {
     var body = pick('.OBViewGridBody, .OBGridBody');
     var rows = body ? all('tr', body).filter(visible) : [];
     var cells = body ? all('.OBGridCell, [class^="OBGridCell"]', body).filter(visible) : [];
-    var banner = pick('.OBGridNotificationText, [class^="OBGridNotification"]');
-    var bannerHost = banner ? (banner.closest('table') || banner.parentElement) : null;
+    /*
+     * The transactional-filter notice is a view message bar, not a grid element: ob-grid.js builds
+     * it in checkShowFilterFunnelIcon and hands it to OBMessageBar#setMessage. An earlier version of
+     * this file looked for OBGridNotificationText, which is the grid's *empty message* style - "Select
+     * a parent record in order to view its children here" - so it measured a 46px placeholder in the
+     * middle of the body and reported it as the banner. The class that identifies the real one is
+     * OBMessageBarLeftMsgContainer, written by the same code that composes the notice.
+     */
+    var bannerHost = all('[class^="OBMessageBar_"]').filter(visible)[0] || null;
+    var banner = bannerHost
+      ? (bannerHost.querySelector('[class^="OBMessageBarLeftMsgContainer"], [class^="OBMessageBarDescriptionText"]') || bannerHost)
+      : null;
     var firstData = cells.length ? round(Math.min.apply(null, cells.map(function (c) { return c.getBoundingClientRect().x; }))) : null;
     var gridLeft = body ? round(body.getBoundingClientRect().x) : null;
     // The separator is painted on the cell, not on the row: a tr has no border box of its own here.
