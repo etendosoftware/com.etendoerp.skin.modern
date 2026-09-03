@@ -1,0 +1,1004 @@
+/*
+ *************************************************************************
+ * Copyright (C) 2026 Futit Services S.L.
+ * Licensed under the Openbravo Public License version 1.1.
+ * You may obtain a copy of the License at
+ * http://www.openbravo.com/legal/license.html
+ ************************************************************************
+ */
+
+/*
+ * Etendo Modern Skin.
+ *
+ * Notes for whoever edits this next:
+ *
+ * - The whole file is scoped under .etskin-on, a class that etendo-skin.js puts on <html> only
+ *   when the skin is enabled for the current session. The stylesheet bundle itself is cached
+ *   globally, so this class is the only per-client switch available.
+ * - SmartClient builds style names by concatenating state suffixes onto a base name
+ *   (OBGridCell -> OBGridCellSelectedOverDark and so on), which yields hundreds of classes.
+ *   Enumerating them is unmaintainable, so we match on the base with attribute selectors. That
+ *   also buys specificity (0,2,1) over the stock (0,1,0) rules, which makes the result
+ *   independent of concatenation order in the bundle.
+ * - This file is concatenated after ob-rtl-styles.css, whose own comment warns that nothing may
+ *   follow it. Use logical properties (padding-inline-start, not padding-left) so RTL keeps
+ *   working.
+ * - The kernel rewrites relative image references and inlines jpg/png/gif as data URIs. It scans
+ *   one line at a time and stops at the first closing parenthesis, so inline SVG must not contain
+ *   parentheses of its own. Arc commands in path data are fine; transform functions are not.
+ * - Sizes here mirror the JS values set by etendo-skin.js. Changing one without the other makes
+ *   text drift inside its row.
+ */
+
+/* ---------------------------------------------------------------- tokens */
+
+/*
+ * Fallbacks only. etendo-skin.js overwrites these on <html> from the ETSKIN_Theme preference, so
+ * the palette changes per client without recompiling anything. Keeping real values here means a
+ * JS failure degrades to a sane theme instead of an unstyled page.
+ */
+.etskin-on {
+  --sk-primary: #4f46e5;
+  --sk-on-primary: #ffffff;
+  --sk-accent: #f59e0b;
+  --sk-on-accent: #101322;
+  --sk-danger: #dc2626;
+  --sk-on-danger: #ffffff;
+
+  --sk-surface: #ffffff;
+  --sk-canvas: #f7f8fa;
+  --sk-text: #1a1d29;
+
+  --sk-radius: 8px;
+  --sk-font: "Inter", "Inter var", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+
+  --sk-cell-height: 34px;
+  --sk-field-height: 30px;
+  --sk-tabbar-height: 44px;
+
+  /* Derived. color-mix keeps every shade in step with whatever primary the client picked. */
+  --sk-text-muted: color-mix(in srgb, var(--sk-text) 58%, transparent);
+  --sk-text-faint: color-mix(in srgb, var(--sk-text) 40%, transparent);
+  --sk-border: color-mix(in srgb, var(--sk-text) 14%, transparent);
+  --sk-border-strong: color-mix(in srgb, var(--sk-text) 24%, transparent);
+  --sk-primary-hover: color-mix(in srgb, var(--sk-primary) 86%, black);
+  --sk-primary-soft: color-mix(in srgb, var(--sk-primary) 10%, var(--sk-surface));
+  --sk-primary-softer: color-mix(in srgb, var(--sk-primary) 5%, var(--sk-surface));
+  --sk-focus-ring: color-mix(in srgb, var(--sk-primary) 32%, transparent);
+
+  --sk-shadow-sm: 0 1px 2px color-mix(in srgb, black 8%, transparent);
+  --sk-shadow-md: 0 4px 16px color-mix(in srgb, black 12%, transparent);
+  --sk-radius-sm: calc(var(--sk-radius) * 0.65);
+
+  /*
+   * Semantic colours for message bars. Info and warning ride the configured palette; success and
+   * error are the two the palette cannot supply, because "this worked" and "this failed" must not
+   * change meaning when an admin picks a green or a red primary.
+   */
+  --sk-info: var(--sk-primary);
+  --sk-warning: #b45309;
+  --sk-success: #047857;
+  --sk-error: var(--sk-danger);
+}
+
+/*
+ * Etendo sets html { font-size: 62.5% } in ob-application-styles.css, so 1rem is 10px here.
+ * Everything below uses px on purpose to avoid depending on that.
+ */
+
+/* ------------------------------------------------------------- typography */
+
+.etskin-on body,
+.etskin-on .normal,
+.etskin-on .pageBackground,
+.etskin-on [class^="OB"] {
+  font-family: var(--sk-font);
+}
+
+.etskin-on .pageBackground {
+  background: var(--sk-canvas);
+  color: var(--sk-text);
+}
+
+.etskin-on .OBTopLayout {
+  background-color: var(--sk-surface);
+}
+
+/* ------------------------------------------------------------- scrollbars */
+
+/*
+ * etendo-skin.js switches SmartClient off its PNG-drawn scrollbars. These rules style the native
+ * ones that take over.
+ */
+.etskin-on * {
+  scrollbar-width: thin;
+  scrollbar-color: var(--sk-border-strong) transparent;
+}
+
+.etskin-on ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.etskin-on ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.etskin-on ::-webkit-scrollbar-thumb {
+  background-color: var(--sk-border-strong);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+.etskin-on ::-webkit-scrollbar-thumb:hover {
+  background-color: var(--sk-text-faint);
+}
+
+.etskin-on ::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* ------------------------------------------------------------------- grid */
+
+.etskin-on .OBGridBody,
+.etskin-on .OBViewGridBody {
+  background-color: var(--sk-surface);
+}
+
+/*
+ * One rule for all 42 OBGridCell* variants. Tabular figures matter more than they look: without
+ * them numeric columns do not line up, which is most of what an ERP grid shows.
+ */
+.etskin-on td[class^="OBGridCell"],
+.etskin-on td[class^="OBGridLinkCell"] {
+  font-family: var(--sk-font);
+  font-size: 13px;
+  font-feature-settings: "tnum" 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--sk-text);
+  border-width: 0 0 1px 0;
+  border-style: solid;
+  border-color: var(--sk-border);
+  padding: 0 10px;
+  vertical-align: middle;
+}
+
+/* Zebra striping plus a hover tint plus a selection tint is two too many signals. Drop the
+   stripes and let selection carry the emphasis. */
+.etskin-on td[class^="OBGridCell"],
+.etskin-on td[class^="OBGridCell"][class$="Dark"],
+.etskin-on td[class^="OBGridCell"][class*="Dark"] {
+  background-color: var(--sk-surface);
+}
+
+.etskin-on td[class^="OBGridCell"][class*="Over"] {
+  background-color: var(--sk-primary-softer);
+}
+
+/*
+ * Selection is carried by the tint alone. A leading rule would be the obvious alternative, but
+ * the styled unit here is the cell, not the row, so an inset shadow repeats down the left edge of
+ * every column and draws the grid full of vertical lines. There is no row level hook to hang it
+ * on: SmartClient gives the TR neither a class nor a background.
+ */
+.etskin-on td[class^="OBGridCell"][class*="Selected"] {
+  background-color: var(--sk-primary-soft);
+}
+
+.etskin-on td[class^="OBGridCell"][class*="SelectedViewInactive"] {
+  background-color: color-mix(in srgb, var(--sk-text) 6%, transparent);
+}
+
+.etskin-on td[class^="OBGridCell"][class*="Error"] {
+  background-color: color-mix(in srgb, var(--sk-danger) 12%, var(--sk-surface));
+}
+
+.etskin-on td[class^="OBGridCell"][class*="Disabled"] {
+  color: var(--sk-text-faint);
+}
+
+/* Header: flat, quiet, uppercase micro-label. The stock one paints a gradient PNG. */
+.etskin-on .OBGridHeaderBar {
+  background: var(--sk-surface);
+  background-image: none;
+  border-width: 0 0 1px 0;
+  border-style: solid;
+  border-color: var(--sk-border-strong);
+}
+
+.etskin-on td[class^="OBGridHeaderCell"],
+.etskin-on div[class^="OBGridHeaderCell"] {
+  background: transparent;
+  background-image: none;
+  border-width: 0;
+}
+
+.etskin-on [class^="OBGridHeaderCellTitle"] {
+  font-family: var(--sk-font);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--sk-text-muted);
+  background: none;
+  border-width: 0;
+  padding: 0 10px;
+}
+
+.etskin-on [class^="OBGridFilter"] input,
+.etskin-on td[class^="OBGridFilter"] {
+  font-family: var(--sk-font);
+  font-size: 13px;
+}
+
+/* --------------------------------------------------------------- toolbar */
+
+.etskin-on .OBToolbar {
+  background-color: var(--sk-primary);
+  border-bottom: 1px solid color-mix(in srgb, black 12%, transparent);
+}
+
+.etskin-on [class^="OBToolbarIconButton"] {
+  border-radius: var(--sk-radius-sm);
+  border: 0 none !important;
+  background-color: transparent;
+  transition: background-color 120ms ease;
+}
+
+.etskin-on [class^="OBToolbarIconButton"][class*="Over"] {
+  background-color: color-mix(in srgb, var(--sk-on-primary) 16%, transparent);
+  border: 0 none !important;
+}
+
+.etskin-on [class^="OBToolbarIconButton"][class*="Down"],
+.etskin-on [class^="OBToolbarIconButton"][class*="Selected"] {
+  background-color: color-mix(in srgb, var(--sk-on-primary) 26%, transparent);
+  border: 0 none !important;
+}
+
+.etskin-on [class^="OBToolbarIconButton"][class*="Disabled"] {
+  opacity: 0.35;
+}
+
+/* Primary action buttons: solid accent pill. */
+.etskin-on [class^="OBToolbarTextButton"] {
+  font-family: var(--sk-font);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-transform: none;
+  color: var(--sk-on-accent);
+  background-color: var(--sk-accent);
+  border-radius: var(--sk-radius-sm);
+  padding: 6px 16px;
+  transition: filter 120ms ease;
+}
+
+.etskin-on [class^="OBToolbarTextButton"]:hover {
+  filter: brightness(0.94);
+  opacity: 1;
+}
+
+.etskin-on [class^="OBToolbarTextButton"][class*="Disabled"] {
+  background-color: color-mix(in srgb, var(--sk-on-primary) 14%, transparent);
+  color: color-mix(in srgb, var(--sk-on-primary) 45%, transparent);
+}
+
+/* --------------------------------------------------------- toolbar icons */
+
+/*
+ * The stock icons are 2014-era PNGs. Swapping them for masked SVG does two things at once: the
+ * shapes become current, and they are painted with a background colour rather than baked into the
+ * image, so they retint with the palette.
+ *
+ * The selector below is an explicit list rather than a [class^="OBToolbarIconButton_icon_"] prefix
+ * on purpose. Masking hides the stock image, so a prefix match would blank out any icon this file
+ * does not define - including icons added by other modules, which we cannot enumerate. Listing the
+ * classes means an unknown icon simply keeps its stock PNG.
+ */
+.etskin-on .OBToolbarIconButton_icon_attach,
+.etskin-on .OBToolbarIconButton_icon_attachExists,
+.etskin-on .OBToolbarIconButton_icon_attachExistsProgress,
+.etskin-on .OBToolbarIconButton_icon_attachProgress,
+.etskin-on .OBToolbarIconButton_icon_audit,
+.etskin-on .OBToolbarIconButton_icon_clone,
+.etskin-on .OBToolbarIconButton_icon_createCopy,
+.etskin-on .OBToolbarIconButton_icon_edit_personalization,
+.etskin-on .OBToolbarIconButton_icon_eliminate,
+.etskin-on .OBToolbarIconButton_icon_email,
+.etskin-on .OBToolbarIconButton_icon_export,
+.etskin-on .OBToolbarIconButton_icon_favourites,
+.etskin-on .OBToolbarIconButton_icon_gridAndFilter,
+.etskin-on .OBToolbarIconButton_icon_innerJoin,
+.etskin-on .OBToolbarIconButton_icon_link,
+.etskin-on .OBToolbarIconButton_icon_manageviews,
+.etskin-on .OBToolbarIconButton_icon_newDoc,
+.etskin-on .OBToolbarIconButton_icon_newRow,
+.etskin-on .OBToolbarIconButton_icon_outerJoin,
+.etskin-on .OBToolbarIconButton_icon_personalization,
+.etskin-on .OBToolbarIconButton_icon_print,
+.etskin-on .OBToolbarIconButton_icon_redo,
+.etskin-on .OBToolbarIconButton_icon_refresh,
+.etskin-on .OBToolbarIconButton_icon_rmFilters,
+.etskin-on .OBToolbarIconButton_icon_save,
+.etskin-on .OBToolbarIconButton_icon_saveProgress,
+.etskin-on .OBToolbarIconButton_icon_saveView,
+.etskin-on .OBToolbarIconButton_icon_saveclose,
+.etskin-on .OBToolbarIconButton_icon_savecloseX,
+.etskin-on .OBToolbarIconButton_icon_showFields,
+.etskin-on .OBToolbarIconButton_icon_showGridId,
+.etskin-on .OBToolbarIconButton_icon_splitView,
+.etskin-on .OBToolbarIconButton_icon_sum,
+.etskin-on .OBToolbarIconButton_icon_tree,
+.etskin-on .OBToolbarIconButton_icon_treeGrid,
+.etskin-on .OBToolbarIconButton_icon_undo {
+  background-image: none;
+  background-color: var(--sk-on-primary);
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: 19px 19px;
+  mask-size: 19px 19px;
+  -webkit-mask-image: var(--sk-icon);
+  mask-image: var(--sk-icon);
+}
+
+.etskin-on .OBToolbarIconButton_icon_save,
+.etskin-on .OBToolbarIconButton_icon_saveProgress {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 4h11l5 5v11H4z M8 4v5h6V4 M8 20v-6h8v6'/%3E%3C/svg%3E");
+}
+
+.etskin-on .OBToolbarIconButton_icon_saveclose,
+.etskin-on .OBToolbarIconButton_icon_savecloseX {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 4h10l4 4v6 M8 4v4h5V4 M4 14v6h8 M16 17l5 5 M21 17l-5 5'/%3E%3C/svg%3E");
+}
+
+.etskin-on .OBToolbarIconButton_icon_saveView {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 3h12v18l-6-4-6 4z'/%3E%3C/svg%3E");
+}
+
+.etskin-on .OBToolbarIconButton_icon_newDoc {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14 3H6v18h12V7z M14 3v4h4 M12 11v6 M9 14h6'/%3E%3C/svg%3E");
+}
+
+.etskin-on .OBToolbarIconButton_icon_newRow {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 5v14 M5 12h14'/%3E%3C/svg%3E");
+}
+
+.etskin-on .OBToolbarIconButton_icon_eliminate {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6h16 M9 6V4h6v2 M6 6l1 14h10l1-14 M10 10v7 M14 10v7'/%3E%3C/svg%3E");
+}
+
+.etskin-on .OBToolbarIconButton_icon_refresh {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20.5 12a8.5 8.5 0 1 1-2.5-6 M20 3v5h-5'/%3E%3C/svg%3E");
+}
+
+.etskin-on .OBToolbarIconButton_icon_print {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 9V3h10v6 M7 17H4V9h16v8h-3 M7 13h10v8H7z'/%3E%3C/svg%3E");
+}
+
+.etskin-on .OBToolbarIconButton_icon_export {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3v13 M8 7l4-4 4 4 M4 16v4h16v-4'/%3E%3C/svg%3E");
+}
+
+.etskin-on .OBToolbarIconButton_icon_email {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 6h18v12H3z M3 7l9 7 9-7'/%3E%3C/svg%3E");
+}
+
+.etskin-on .OBToolbarIconButton_icon_attach,
+.etskin-on .OBToolbarIconButton_icon_attachExists,
+.etskin-on .OBToolbarIconButton_icon_attachProgress,
+.etskin-on .OBToolbarIconButton_icon_attachExistsProgress {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 11.5l-8.4 8.4a5 5 0 0 1-7.1-7.1l8.5-8.5a3.5 3.5 0 0 1 4.9 4.9l-8.4 8.5a2 2 0 0 1-2.8-2.8l7.8-7.8'/%3E%3C/svg%3E");
+}
+
+.etskin-on .OBToolbarIconButton_icon_undo {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 7L4 12l5 5 M4 12h10a6 6 0 0 1 0 12h-2'/%3E%3C/svg%3E");
+}
+
+.etskin-on .OBToolbarIconButton_icon_redo {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 7l5 5-5 5 M20 12H10a6 6 0 0 0 0 12h2'/%3E%3C/svg%3E");
+}
+
+.etskin-on .OBToolbarIconButton_icon_link {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10 13a4 4 0 0 0 6 .5l3-3a4 4 0 0 0-5.7-5.7l-1.7 1.7 M14 11a4 4 0 0 0-6-.5l-3 3a4 4 0 0 0 5.7 5.7l1.7-1.7'/%3E%3C/svg%3E");
+}
+
+.etskin-on .OBToolbarIconButton_icon_createCopy,
+.etskin-on .OBToolbarIconButton_icon_clone {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 9h11v11H9z M5 15H4V4h11v1'/%3E%3C/svg%3E");
+}
+
+.etskin-on .OBToolbarIconButton_icon_sum {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M18 5H7l7 7-7 7h11'/%3E%3C/svg%3E");
+}
+
+.etskin-on .OBToolbarIconButton_icon_splitView {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 4h16v16H4z M12 4v16'/%3E%3C/svg%3E");
+}
+
+.etskin-on .OBToolbarIconButton_icon_audit {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3a9 9 0 1 0 9 9 M12 3a9 9 0 0 1 9 9 M12 7v5l3 2'/%3E%3C/svg%3E");
+}
+
+.etskin-on .OBToolbarIconButton_icon_favourites {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9z'/%3E%3C/svg%3E");
+}
+
+.etskin-on .OBToolbarIconButton_icon_tree,
+.etskin-on .OBToolbarIconButton_icon_treeGrid {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 4h6v4H4z M14 10h6v4h-6z M14 16h6v4h-6z M7 8v10 M7 12h7 M7 18h7'/%3E%3C/svg%3E");
+}
+
+.etskin-on .OBToolbarIconButton_icon_innerJoin {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9.5 6a6 6 0 1 0 0 12 6 6 0 1 0 0-12 M14.5 6a6 6 0 1 1 0 12 6 6 0 1 1 0-12'/%3E%3C/svg%3E");
+}
+
+.etskin-on .OBToolbarIconButton_icon_outerJoin {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9.5 6a6 6 0 1 0 0 12 6 6 0 1 0 0-12 M14.5 6a6 6 0 1 1 0 12 6 6 0 1 1 0-12 M12 7.2v9.6'/%3E%3C/svg%3E");
+}
+
+.etskin-on .OBToolbarIconButton_icon_gridAndFilter {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 5h16 M7 11h10 M10 17h4'/%3E%3C/svg%3E");
+}
+
+.etskin-on .OBToolbarIconButton_icon_rmFilters {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 5h16 M7 11h10 M10 17h4 M15.5 15.5l5 5 M20.5 15.5l-5 5'/%3E%3C/svg%3E");
+}
+
+.etskin-on .OBToolbarIconButton_icon_manageviews {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3l9 5-9 5-9-5z M3 13l9 5 9-5'/%3E%3C/svg%3E");
+}
+
+.etskin-on .OBToolbarIconButton_icon_personalization {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 7h9 M18 7h1 M5 12h3 M12 12h7 M5 17h9 M18 17h1 M16 5v4 M10 10v4 M16 15v4'/%3E%3C/svg%3E");
+}
+
+.etskin-on .OBToolbarIconButton_icon_edit_personalization {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 16.5V20h3.5L18 9.5l-3.5-3.5z M13.5 7.5l3 3'/%3E%3C/svg%3E");
+}
+
+.etskin-on .OBToolbarIconButton_icon_showFields {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 5h16v14H4z M4 10h16 M10 10v9'/%3E%3C/svg%3E");
+}
+
+.etskin-on .OBToolbarIconButton_icon_showGridId {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 4v16 M13 4v16 M3 9h16 M3 15h16'/%3E%3C/svg%3E");
+}
+
+/* ------------------------------------------------------------------ tabs */
+
+.etskin-on .OBTabBarMain,
+.etskin-on .OBTabBarChild {
+  background-color: var(--sk-surface);
+  background-image: none;
+  border-bottom: 1px solid var(--sk-border);
+  text-transform: none;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/*
+ * 27 title variants collapse into three rules. The stock skin marks the active tab with a
+ * background PNG; an underline reads better and costs no image.
+ */
+.etskin-on [class^="OBTabBarButtonMainTitle"],
+.etskin-on [class^="OBTabBarButtonChildTitle"] {
+  font-family: var(--sk-font);
+  font-size: 13px;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--sk-text-muted);
+  background: none;
+  background-image: none;
+  border: 0 none;
+  padding: 0 16px;
+}
+
+.etskin-on [class^="OBTabBarButtonMainTitle"][class*="Selected"],
+.etskin-on [class^="OBTabBarButtonChildTitle"][class*="Selected"] {
+  color: var(--sk-primary);
+  font-weight: 600;
+  box-shadow: inset 0 -2px 0 0 var(--sk-primary);
+}
+
+.etskin-on [class^="OBTabBarButtonMainTitle"][class*="Over"],
+.etskin-on [class^="OBTabBarButtonChildTitle"][class*="Over"] {
+  color: var(--sk-text);
+}
+
+.etskin-on [class^="OBTabBarButtonMainTitle"][class*="Disabled"],
+.etskin-on [class^="OBTabBarButtonChildTitle"][class*="Disabled"] {
+  color: var(--sk-text-faint);
+}
+
+.etskin-on [class^="OBTabBarButtonMainTop"],
+.etskin-on [class^="OBTabBarButtonChildTop"] {
+  background-image: none;
+  background-color: transparent;
+  border: 0 none;
+}
+
+.etskin-on .OBTabSetMainContainer,
+.etskin-on .OBTabSetChildContainer {
+  background-color: var(--sk-canvas);
+  border: 0 none;
+}
+
+/* Legacy 2.50 tab colour hooks, kept in step with the palette. */
+.etskin-on .tabStyleActive,
+.etskin-on .tabStyleActiveSelected {
+  background-color: var(--sk-primary);
+}
+
+.etskin-on .tabStyleActiveSelected {
+  border-top: 3px solid var(--sk-accent);
+}
+
+.etskin-on .tabStyleInactive {
+  background-color: var(--sk-canvas);
+  color: var(--sk-text-faint);
+}
+
+/* ------------------------------------------------------------ form fields */
+
+.etskin-on .OBViewForm,
+.etskin-on .OBParameterWindowForm {
+  background-color: var(--sk-surface);
+}
+
+.etskin-on [class^="OBFormFieldLabel"] {
+  font-family: var(--sk-font);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--sk-text-muted);
+}
+
+.etskin-on [class^="OBFormFieldLabel"][class*="Error"] {
+  color: var(--sk-danger);
+}
+
+/*
+ * One rule for every input flavour: text, select, date, number, image, plus the read-only static
+ * renderer. The suffix set is the usual state explosion.
+ */
+.etskin-on [class^="OBFormFieldInput"],
+.etskin-on [class^="OBFormFieldSelectInput"],
+.etskin-on [class^="OBFormFieldDateInput"],
+.etskin-on [class^="OBFormFieldNumberInput"],
+.etskin-on [class^="OBFormFieldStatic"] {
+  font-family: var(--sk-font);
+  font-size: 13px;
+  color: var(--sk-text);
+  background-color: var(--sk-surface);
+  border: 1px solid var(--sk-border);
+  border-radius: var(--sk-radius-sm);
+  padding: 4px 10px;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+/*
+ * ob-form-styles.js pins textBoxStyle to 'OBFormFieldInput_HeightHack OBFormFieldInput' and the
+ * stock CSS forces height: 17px !important on it. Matching that with our own !important is the
+ * only way to let fields breathe.
+ */
+.etskin-on .OBFormFieldInput_HeightHack {
+  height: auto !important;
+  min-height: calc(var(--sk-field-height) - 2px) !important;
+}
+
+.etskin-on [class^="OBFormFieldInput"][class*="Focused"],
+.etskin-on [class^="OBFormFieldSelectInput"][class*="Focused"],
+.etskin-on [class^="OBFormFieldDateInput"][class*="Focused"],
+.etskin-on [class^="OBFormFieldNumberInput"][class*="Focused"],
+.etskin-on [class^="OBFormFieldInput"]:focus,
+.etskin-on [class^="OBFormFieldSelectInput"]:focus,
+.etskin-on [class^="OBFormFieldDateInput"]:focus,
+.etskin-on [class^="OBFormFieldNumberInput"]:focus {
+  border-color: var(--sk-primary);
+  box-shadow: 0 0 0 3px var(--sk-focus-ring);
+  outline: none;
+}
+
+/* Required fields: a left accent bar instead of the stock full yellow fill. */
+.etskin-on [class^="OBFormFieldInput"][class*="Required"],
+.etskin-on [class^="OBFormFieldSelectInput"][class*="Required"],
+.etskin-on [class^="OBFormFieldDateInput"][class*="Required"],
+.etskin-on [class^="OBFormFieldNumberInput"][class*="Required"] {
+  background-color: var(--sk-surface);
+  border-inline-start: 3px solid var(--sk-accent);
+}
+
+.etskin-on [class^="OBFormFieldInput"][class*="Error"],
+.etskin-on [class^="OBFormFieldSelectInput"][class*="Error"],
+.etskin-on [class^="OBFormFieldDateInput"][class*="Error"],
+.etskin-on [class^="OBFormFieldNumberInput"][class*="Error"] {
+  border-color: var(--sk-danger);
+  color: var(--sk-text);
+}
+
+.etskin-on [class^="OBFormFieldInput"][class*="Disabled"],
+.etskin-on [class^="OBFormFieldSelectInput"][class*="Disabled"],
+.etskin-on [class^="OBFormFieldDateInput"][class*="Disabled"],
+.etskin-on [class^="OBFormFieldNumberInput"][class*="Disabled"] {
+  background-color: color-mix(in srgb, var(--sk-text) 4%, transparent);
+  border-color: transparent;
+  color: var(--sk-text-muted);
+  -webkit-text-fill-color: var(--sk-text-muted);
+}
+
+.etskin-on [class^="OBFormButton"] {
+  font-family: var(--sk-font);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--sk-on-primary);
+  background-color: var(--sk-primary);
+  border: 0 none;
+  border-radius: var(--sk-radius-sm);
+  padding: 0 16px;
+}
+
+.etskin-on [class^="OBFormButton"][class*="Over"] {
+  background-color: var(--sk-primary-hover);
+}
+
+.etskin-on [class^="OBFormButton"][class*="Disabled"] {
+  background-color: color-mix(in srgb, var(--sk-text) 10%, transparent);
+  color: var(--sk-text-faint);
+}
+
+/* ---------------------------------------------------- navbar and app menu */
+
+.etskin-on .OBTopLayout {
+  background-color: var(--sk-surface);
+  border-bottom: 1px solid var(--sk-border);
+}
+
+/*
+ * The strip is only as wide as the buttons it holds, so a border on it draws a rule that stops
+ * two thirds of the way across the screen. The full width separator belongs to OBTopLayout.
+ */
+.etskin-on .OBNavBarToolStrip {
+  background-color: transparent;
+  border: 0 none;
+}
+
+.etskin-on .OBNavBarComponent {
+  background-color: transparent;
+  color: var(--sk-text);
+  border-radius: var(--sk-radius-sm);
+  margin-inline-end: 2px;
+}
+
+/*
+ * Stock paints these labels in the Etendo navy at 14px bold - heavier than the window title
+ * directly below them, which inverts the hierarchy. A navbar holds secondary controls.
+ */
+.etskin-on .OBNavBarTextButton,
+.etskin-on .OBApplicationMenuButton {
+  font-family: var(--sk-font);
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0;
+  color: var(--sk-text-muted) !important;
+}
+
+.etskin-on [class^="OBNavBarTextButton"][class*="Over"],
+.etskin-on .OBNavBarTextButton:hover,
+.etskin-on .OBApplicationMenuButton:hover {
+  color: var(--sk-primary) !important;
+}
+
+.etskin-on .OBNavBarComponent:hover,
+.etskin-on .OBApplicationMenuButton:hover,
+.etskin-on .OBNavBarComponentSelected {
+  background-color: var(--sk-primary-soft);
+  border-radius: var(--sk-radius-sm);
+}
+
+/*
+ * iconCreateNew.png and iconQuickLaunch.png are drawn at their intrinsic size inside a 70x29 box,
+ * which is why they read as oversized next to everything else. Masking them to a fixed 20px puts
+ * them on the same footing as the toolbar icons, and lets them take the palette on hover.
+ */
+.etskin-on .OBNavBarCreateNew,
+.etskin-on .OBQuickLaunch {
+  background-image: none;
+  background-color: var(--sk-text-muted);
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: 20px 20px;
+  mask-size: 20px 20px;
+  -webkit-mask-image: var(--sk-icon);
+  mask-image: var(--sk-icon);
+}
+
+.etskin-on .OBNavBarCreateNew:hover,
+.etskin-on .OBQuickLaunch:hover {
+  background-color: var(--sk-primary);
+}
+
+.etskin-on .OBNavBarCreateNew {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 5v14 M5 12h14'/%3E%3C/svg%3E");
+}
+
+.etskin-on .OBQuickLaunch {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M11 4a7 7 0 1 0 0 14 7 7 0 1 0 0-14 M16.2 16.2L21 21'/%3E%3C/svg%3E");
+}
+
+.etskin-on [class^="OBApplicationMenuTreeItemCell"] {
+  font-family: var(--sk-font);
+  font-size: 13px;
+  color: var(--sk-text);
+}
+
+.etskin-on [class^="OBApplicationMenuTreeItemCell"][class*="Over"],
+.etskin-on [class^="OBApplicationMenuTreeItemCell"][class*="Selected"] {
+  background-color: var(--sk-primary-soft);
+  color: var(--sk-primary);
+}
+
+.etskin-on .OBApplicationMenuTreeBody,
+.etskin-on .OBApplicationMenuTree,
+.etskin-on .OBApplicationMenuTreeTable {
+  background-color: var(--sk-surface);
+}
+
+/* -------------------------------------------------------------- workspace */
+
+.etskin-on .OBMyOpenbravo,
+.etskin-on .OBMyOBPortal {
+  background-color: var(--sk-canvas);
+}
+
+/*
+ * Stock fills this column with #dddff6, a fixed lilac chosen to sit under the stock navy. It is
+ * the one panel that visibly disagrees with any other palette, so it becomes a plain surface and
+ * earns its separation from a border instead of a tint.
+ */
+.etskin-on .OBMyOBLeftColumn {
+  background-color: var(--sk-surface);
+  border-inline-end: 1px solid var(--sk-border);
+}
+
+/*
+ * Section headings become the same micro label used by the grid headers. Stock underlines them
+ * with 3px of the Etendo navy, which is heavier than any rule elsewhere in the application and
+ * reads as a divider between panels rather than a heading.
+ */
+.etskin-on .OBMyOBRecentViews {
+  font-family: var(--sk-font);
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--sk-text-muted) !important;
+  border-bottom: 1px solid var(--sk-border) !important;
+  padding-bottom: 6px;
+}
+
+/* The entry separators are a fixed lilac that only agrees with the stock navy. */
+.etskin-on .OBMyOBRecentViewsEntry {
+  border-bottom: 1px solid var(--sk-border) !important;
+}
+
+.etskin-on .OBMyOBRecentViewsEntry,
+.etskin-on .OBMyOBRecentDocumentsEntry,
+.etskin-on .OBMyOBLeftColumnLink {
+  font-family: var(--sk-font);
+  font-size: 13px !important;
+  color: var(--sk-text) !important;
+  border-radius: var(--sk-radius-sm);
+  transition: background-color 120ms ease, color 120ms ease;
+}
+
+.etskin-on .OBMyOBRecentDocumentsEntry {
+  font-size: 12px !important;
+  color: var(--sk-text-muted) !important;
+}
+
+.etskin-on .OBMyOBLeftColumnLink {
+  font-size: 12px !important;
+  color: var(--sk-primary) !important;
+}
+
+.etskin-on .OBMyOBRecentViewsEntry:hover,
+.etskin-on .OBMyOBRecentDocumentsEntry:hover,
+.etskin-on .OBMyOBLeftColumnLink:hover {
+  background-color: var(--sk-primary-soft);
+  color: var(--sk-primary) !important;
+}
+
+.etskin-on .OBMyOBCreateNew {
+  background-image: none;
+  background-color: var(--sk-primary);
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: 14px 14px;
+  mask-size: 14px 14px;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 5v14 M5 12h14'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 5v14 M5 12h14'/%3E%3C/svg%3E");
+}
+
+/* -------------------------------------------------------------- statusbar */
+
+.etskin-on .OBStatusBar {
+  background-color: var(--sk-canvas);
+  border-bottom: 1px solid var(--sk-border);
+}
+
+.etskin-on [class^="OBStatusBarTextLabel"],
+.etskin-on [class^="OBStatusBarTextLink"] {
+  font-family: var(--sk-font);
+  font-size: 13px;
+  color: var(--sk-text-muted);
+}
+
+.etskin-on .OBStatusBarTextLabel_Title {
+  color: var(--sk-text);
+  font-weight: 600;
+}
+
+/* --------------------------------------------------- dialogs and messages */
+
+/*
+ * Stock paints the info bar #9bcdff with #3366cc text - a 2014 blue that belongs to no palette.
+ * Each severity becomes a tinted band with a solid rule on the leading edge, the pattern every
+ * current UI uses for an inline alert, and the tints are mixed from the tokens so they follow the
+ * theme instead of fighting it.
+ */
+.etskin-on [class^="OBMessageBar"] {
+  font-family: var(--sk-font);
+  font-size: 13px;
+  border-radius: var(--sk-radius-sm);
+}
+
+.etskin-on .OBMessageBar_info,
+.etskin-on .OBMessageBar_tip,
+.etskin-on .OBMessageBar_warning,
+.etskin-on .OBMessageBar_success,
+.etskin-on .OBMessageBar_error {
+  background-color: color-mix(in srgb, var(--sk-msg) 9%, var(--sk-surface));
+  border-inline-start: 3px solid var(--sk-msg);
+  color: color-mix(in srgb, var(--sk-msg) 72%, black);
+}
+
+.etskin-on .OBMessageBar_info,
+.etskin-on .OBMessageBar_tip {
+  --sk-msg: var(--sk-info);
+}
+
+.etskin-on .OBMessageBar_warning {
+  --sk-msg: var(--sk-warning);
+}
+
+.etskin-on .OBMessageBar_success {
+  --sk-msg: var(--sk-success);
+}
+
+.etskin-on .OBMessageBar_error {
+  --sk-msg: var(--sk-error);
+}
+
+/* The text nodes carry their own colour, so the band alone is not enough. */
+.etskin-on [class^="OBMessageBarDescriptionText"],
+.etskin-on [class^="OBMessageBarLeftMsg"],
+.etskin-on [class^="OBMessageBarRightMsg"] {
+  font-family: var(--sk-font);
+  font-size: 13px;
+  color: inherit;
+}
+
+/*
+ * mainIcon-info.png and its siblings are 47x40 glyphs in the same 2014 blue as the stock band, and
+ * they cannot be retinted because they are <img> content rather than a background. The leading
+ * rule already states the severity, so the badge goes and the text starts at the edge of the band.
+ */
+.etskin-on [class^="OBMessageBar"] img[src*="mainIcon"] {
+  display: none;
+}
+
+.etskin-on .OBMessageBarCloseIcon {
+  opacity: 0.55;
+  transition: opacity 120ms ease;
+}
+
+.etskin-on .OBMessageBarCloseIcon:hover {
+  opacity: 1;
+}
+
+/* ------------------------------------------------- grid filters and tools */
+
+/*
+ * The filter row sits directly under the header, so it reads as part of it: same canvas tint, a
+ * single rule underneath, and no per cell borders.
+ */
+.etskin-on .OBGridFilterBase {
+  background-color: var(--sk-canvas);
+  border-bottom: 1px solid var(--sk-border);
+  color: var(--sk-text);
+}
+
+.etskin-on .OBGridFilterCell {
+  background-color: transparent;
+  border: 0 none;
+  border-inline-end: 1px solid color-mix(in srgb, var(--sk-border) 55%, transparent);
+}
+
+.etskin-on .OBGridFilterStaticText,
+.etskin-on .OBGridFilterStaticTextLink {
+  font-family: var(--sk-font);
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  color: var(--sk-text-muted) !important;
+}
+
+.etskin-on .OBGridFilterStaticTextLink {
+  color: var(--sk-primary) !important;
+  cursor: pointer;
+}
+
+.etskin-on .OBGridToolStrip {
+  background-color: transparent;
+}
+
+.etskin-on .OBGridToolStripSeparator {
+  background-color: var(--sk-border);
+}
+
+.etskin-on .OBGridToolStripIcon {
+  border-radius: var(--sk-radius-sm);
+  opacity: 0.6;
+  transition: opacity 120ms ease, background-color 120ms ease;
+}
+
+.etskin-on .OBGridToolStripIcon:hover {
+  opacity: 1;
+  background-color: var(--sk-primary-soft);
+}
+
+/* ---------------------------------------------------------- active view */
+
+/*
+ * The split view marker is a 6px band of #fad614 down the full height of the view - the single
+ * loudest element on the screen for something that only says "focus is here". Three pixels of the
+ * primary says the same thing without competing with the data.
+ */
+.etskin-on .OBViewActive {
+  background-color: var(--sk-primary);
+  width: 3px !important;
+  min-width: 3px !important;
+}
+
+.etskin-on .OBViewInActive {
+  background-color: transparent;
+  width: 3px !important;
+  min-width: 3px !important;
+}
+
+.etskin-on [class^="OBPopup"],
+.etskin-on [class^="OBDialog"] {
+  font-family: var(--sk-font);
+}
+
+.etskin-on .OBLoadingPromptLabel {
+  font-family: var(--sk-font);
+  color: var(--sk-primary);
+}
+
+/* ----------------------------------------------------------- accessibility */
+
+@media (prefers-reduced-motion: reduce) {
+  .etskin-on * {
+    transition-duration: 1ms !important;
+    animation-duration: 1ms !important;
+  }
+}
