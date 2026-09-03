@@ -1,16 +1,16 @@
 {
  "screen": "grid",
  "href": "http://localhost:8888/etendo_skin/#%7Bst:1,bm:%5B%7BviewId:__OBMyOpenbravoImplementation__,params:%7BmyOB:true,canClose:false,tabTitle:__Workspace__%7D%7D,%7BviewId:___167__,params:%7BwindowId:__167__,viewId:___167__,tabTitle:__Sales%20Invoice__%7D%7D%5D%7D",
- "recordedAt": "2026-09-03T12:08:57.780Z",
+ "recordedAt": "2026-09-03T13:39:19.655Z",
  "sources": {
-  "css/etendo-skin.css": "923aa4b4113c4c5225d3292cc4242ed5f0f5ec49c0e0f1018f8533203a3b1e01",
+  "css/etendo-skin.css": "25cc75258c1b0faa2d0717218ef3c58cd3e81dd8a66a761702e8c715bc1c205b",
   "css/etendo-skin-login.css": "8b5fb761a21a7d3a8226686097cf3d199a8c9cd8df054d650f9d90112df027b6",
-  "js/etendo-skin.js": "57d0bd79d5b8c49277239ed5ebad945f85d39c72480d9026b0ad65d414f26e8e",
+  "js/etendo-skin.js": "d95773431a321f018e144c0aeecf8ac2883c5333654ff152e1d6d558ef13f646",
   "js/etendo-skin-nav.js": "19f711c77e6626da05eb129ff0fa9d8f5432f206265e258776160200990c2f0d",
   "js/etendo-skin-topbar.js": "ec792c708043c6d997fef8af6a88e4848ff566f04cbdd3bfe87dd3c5456a6111",
   "js/etendo-skin-toolbar.js": "0af41b2faedf0cfcd2437a8d68dca7aa42ec85a123ff7c34db4ac0b4c366d957",
   "js/etendo-skin-form.js": "a5af46ea8d058fdf36f9a653351a476717831474591af2027a0d82710688b06c",
-  "js/etendo-skin-grid.js": "dc2511a4e0734297922b9bbf01661bf0e2e3080b72f6fe04e75aeabe0eec7c95"
+  "js/etendo-skin-grid.js": "23411d6e6aaf9105fc3449ad271dd0075f6551e9203c959a63c4367ee3e6ea5c"
  },
  "viewport": {
   "w": 1440,
@@ -169,7 +169,7 @@
      "w": 32,
      "h": 32
     },
-    "disabled": false,
+    "disabled": true,
     "group": "record"
    },
    {
@@ -503,7 +503,7 @@
     "weight": 400
    },
    {
-    "text": "0.00",
+    "text": "1.85",
     "box": {
      "x": 920,
      "y": 207,
@@ -621,30 +621,56 @@
    "height": 8
   }
  },
- "form": null,
+ "form": {
+  "box": {
+   "x": 286,
+   "y": 189,
+   "w": 1134,
+   "h": 594
+  },
+  "inputs": [],
+  "columns": [],
+  "decorations": [],
+  "required": [],
+  "unwrappedAsterisks": 0,
+  "linkGlyphs": 7,
+  "linkGlyphOpacity": 0,
+  "sections": []
+ },
  "panes": {
   "form": null,
   "grid": {
    "x": 304,
    "y": 207,
    "w": 1135,
-   "h": 277
+   "h": 575
   },
   "childStrip": {
    "x": 260,
-   "y": 485,
+   "y": 783,
    "w": 1180,
    "h": 43
   },
   "childPane": {
    "x": 260,
-   "y": 485,
+   "y": 783,
    "w": 1180,
-   "h": 332
+   "h": 34
   },
   "viewportHeight": 817
  },
- "statusBar": null,
+ "statusBar": {
+  "box": {
+   "x": 266,
+   "y": 154,
+   "w": 1174,
+   "h": 30
+  },
+  "height": 30,
+  "title": null,
+  "largestText": null,
+  "texts": []
+ },
  "nav": {
   "collapsed": false,
   "width": 260,
@@ -791,22 +817,17 @@
   "byColour": [
    {
     "color": "255,255,255",
-    "share": 70.29,
+    "share": 86.42,
     "white": true
    },
    {
     "color": "245,246,250",
-    "share": 13.01,
+    "share": 8.43,
     "white": false
    },
    {
     "color": "224,231,255",
-    "share": 10.53,
-    "white": false
-   },
-   {
-    "color": "233,239,253",
-    "share": 5.23,
+    "share": 4.21,
     "white": false
    },
    {
@@ -817,14 +838,14 @@
   ],
   "largestRegion": {
    "color": "255,255,255",
-   "share": 30.32,
+   "share": 86.42,
    "white": true
   },
   "largestColouredRegion": {
    "color": "224,231,255",
-   "share": 5.26
+   "share": 4.21
   },
-  "largestNonWhiteShare": 13.01,
+  "largestNonWhiteShare": 8.43,
   "lavenderElements": [
    {
     "cls": "OBTabSetMain",
@@ -832,9 +853,9 @@
     "h": 761
    },
    {
-    "cls": "OBTabBarChild",
-    "w": 1180,
-    "h": 43
+    "cls": "",
+    "w": 1108,
+    "h": 45.95
    },
    {
     "cls": "OBTabBarChild",
@@ -842,29 +863,14 @@
     "h": 43
    },
    {
-    "cls": "OBGridFilterBase",
-    "w": 1172,
-    "h": 22
+    "cls": "OBStatusBar",
+    "w": 1174,
+    "h": 30
    },
    {
     "cls": "OBGridFilterBase",
     "w": 1172,
     "h": 22
-   },
-   {
-    "cls": "OBGridCellSelected",
-    "w": 200,
-    "h": 38
-   },
-   {
-    "cls": "OBGridCellSelected",
-    "w": 200,
-    "h": 38
-   },
-   {
-    "cls": "OBGridCellSelected",
-    "w": 200,
-    "h": 38
    }
   ]
  },
@@ -872,7 +878,7 @@
   {
    "cls": "OBViewActive",
    "w": 3,
-   "h": 331,
+   "h": 629,
    "source": "background"
   }
  ],
@@ -885,10 +891,10 @@
    13
   ],
   "sizeCounts": {
-   "11": 4,
-   "12": 4,
-   "13": 33,
-   "12.5": 22
+   "11": 5,
+   "12": 1,
+   "13": 31,
+   "12.5": 15
   },
   "uppercase": [],
   "weight700": []
