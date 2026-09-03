@@ -1,14 +1,14 @@
 {
  "screen": "grid",
  "href": "http://localhost:8888/etendo_skin/#%7Bst:1,bm:%5B%7BviewId:__OBMyOpenbravoImplementation__,params:%7BmyOB:true,canClose:false,tabTitle:__Workspace__%7D%7D,%7BviewId:___167__,params:%7BwindowId:__167__,viewId:___167__,tabTitle:__Sales%20Invoice__%7D%7D%5D%7D",
- "recordedAt": "2026-09-03T13:39:19.655Z",
+ "recordedAt": "2026-09-03T16:18:26.270Z",
  "sources": {
-  "css/etendo-skin.css": "25cc75258c1b0faa2d0717218ef3c58cd3e81dd8a66a761702e8c715bc1c205b",
+  "css/etendo-skin.css": "c93a58a71db4a50f2aec8f598f1958e63eb2857f15552db054ec6403bb192509",
   "css/etendo-skin-login.css": "8b5fb761a21a7d3a8226686097cf3d199a8c9cd8df054d650f9d90112df027b6",
   "js/etendo-skin.js": "d95773431a321f018e144c0aeecf8ac2883c5333654ff152e1d6d558ef13f646",
-  "js/etendo-skin-nav.js": "19f711c77e6626da05eb129ff0fa9d8f5432f206265e258776160200990c2f0d",
-  "js/etendo-skin-topbar.js": "ec792c708043c6d997fef8af6a88e4848ff566f04cbdd3bfe87dd3c5456a6111",
-  "js/etendo-skin-toolbar.js": "0af41b2faedf0cfcd2437a8d68dca7aa42ec85a123ff7c34db4ac0b4c366d957",
+  "js/etendo-skin-nav.js": "4cbfd104457e8082eb7da5670d7bb6e63a86d57d3d24f6a688e5822196486c81",
+  "js/etendo-skin-topbar.js": "3c4911a5d77f98e9ce6e4dfc552073aaaa00de6a51985862ead684d0b3a30317",
+  "js/etendo-skin-toolbar.js": "0923c076168b49ff35ab1ef06f08a7a29a97f6439344ed9129ff910628759aa9",
   "js/etendo-skin-form.js": "a5af46ea8d058fdf36f9a653351a476717831474591af2027a0d82710688b06c",
   "js/etendo-skin-grid.js": "23411d6e6aaf9105fc3449ad271dd0075f6551e9203c959a63c4367ee3e6ea5c"
  },
@@ -34,10 +34,11 @@
     "color": "rgb(37, 99, 235)"
    }
   ],
-  "logoHeight": 1,
+  "logoHeight": 14,
   "imageHeights": [
    28,
    28,
+   14,
    1,
    6,
    6,
@@ -67,8 +68,12 @@
   "cluster": {
    "borderWidth": 0,
    "background": "rgba(0, 0, 0, 0)",
-   "buttons": 5,
+   "buttons": 6,
    "sizes": [
+    [
+     40,
+     40
+    ],
     [
      40,
      40
@@ -94,22 +99,23 @@
     6,
     6,
     6,
+    6,
     6
    ]
   }
  },
  "toolbar": {
   "box": {
-   "x": 260,
+   "x": 52,
    "y": 100,
-   "w": 1180,
+   "w": 1388,
    "h": 54
   },
   "icons": [
    {
     "name": "newDoc",
     "box": {
-     "x": 272,
+     "x": 64,
      "y": 110,
      "w": 32,
      "h": 32
@@ -120,7 +126,7 @@
    {
     "name": "newRow",
     "box": {
-     "x": 306,
+     "x": 98,
      "y": 110,
      "w": 32,
      "h": 32
@@ -131,7 +137,7 @@
    {
     "name": "save",
     "box": {
-     "x": 355,
+     "x": 147,
      "y": 110,
      "w": 32,
      "h": 32
@@ -142,7 +148,7 @@
    {
     "name": "savecloseX",
     "box": {
-     "x": 389,
+     "x": 181,
      "y": 110,
      "w": 32,
      "h": 32
@@ -153,7 +159,7 @@
    {
     "name": "undo",
     "box": {
-     "x": 423,
+     "x": 215,
      "y": 110,
      "w": 32,
      "h": 32
@@ -164,18 +170,18 @@
    {
     "name": "eliminate",
     "box": {
-     "x": 472,
+     "x": 264,
      "y": 110,
      "w": 32,
      "h": 32
     },
-    "disabled": true,
+    "disabled": false,
     "group": "record"
    },
    {
     "name": "refresh",
     "box": {
-     "x": 506,
+     "x": 298,
      "y": 110,
      "w": 32,
      "h": 32
@@ -186,7 +192,7 @@
    {
     "name": "etskinMore",
     "box": {
-     "x": 555,
+     "x": 347,
      "y": 110,
      "w": 32,
      "h": 32
@@ -246,7 +252,7 @@
    {
     "label": "",
     "box": {
-     "x": 355,
+     "x": 147,
      "y": 110,
      "w": 32,
      "h": 32
@@ -283,7 +289,7 @@
    {
     "text": "Organization",
     "box": {
-     "x": 304,
+     "x": 96,
      "y": 177,
      "w": 200,
      "h": 29
@@ -297,7 +303,7 @@
    {
     "text": "Document No. ",
     "box": {
-     "x": 504,
+     "x": 296,
      "y": 177,
      "w": 116,
      "h": 29
@@ -311,7 +317,7 @@
    {
     "text": "Invoice Date",
     "box": {
-     "x": 620,
+     "x": 412,
      "y": 177,
      "w": 100,
      "h": 29
@@ -325,7 +331,7 @@
    {
     "text": "Business Partner",
     "box": {
-     "x": 720,
+     "x": 512,
      "y": 177,
      "w": 200,
      "h": 29
@@ -339,7 +345,7 @@
    {
     "text": "Total Gross Amount",
     "box": {
-     "x": 920,
+     "x": 712,
      "y": 177,
      "w": 138,
      "h": 29
@@ -353,7 +359,7 @@
    {
     "text": "Payment Complete",
     "box": {
-     "x": 1058,
+     "x": 850,
      "y": 177,
      "w": 133.13,
      "h": 29
@@ -367,7 +373,7 @@
    {
     "text": "Currency",
     "box": {
-     "x": 1191,
+     "x": 983,
      "y": 177,
      "w": 200,
      "h": 29
@@ -381,7 +387,7 @@
    {
     "text": "Total Paid",
     "box": {
-     "x": 1391,
+     "x": 1183,
      "y": 177,
      "w": 100,
      "h": 29
@@ -395,7 +401,7 @@
    {
     "text": "Total Outstanding",
     "box": {
-     "x": 1491,
+     "x": 1283,
      "y": 177,
      "w": 126,
      "h": 29
@@ -409,7 +415,7 @@
    {
     "text": "Amount Currently Due",
     "box": {
-     "x": 1617,
+     "x": 1409,
      "y": 177,
      "w": 153.19,
      "h": 29
@@ -423,7 +429,7 @@
    {
     "text": "Days Till Next Due",
     "box": {
-     "x": 1770,
+     "x": 1562,
      "y": 177,
      "w": 129.31,
      "h": 29
@@ -437,7 +443,7 @@
    {
     "text": "Percentage Paid Late",
     "box": {
-     "x": 1899,
+     "x": 1691,
      "y": 177,
      "w": 147,
      "h": 29
@@ -453,7 +459,7 @@
    {
     "text": "F&B España - Región Nort",
     "box": {
-     "x": 304,
+     "x": 96,
      "y": 207,
      "w": 200,
      "h": 38
@@ -466,7 +472,7 @@
    {
     "text": "1000367",
     "box": {
-     "x": 504,
+     "x": 296,
      "y": 207,
      "w": 116,
      "h": 38
@@ -479,7 +485,7 @@
    {
     "text": "03-09-2026",
     "box": {
-     "x": 620,
+     "x": 412,
      "y": 207,
      "w": 100,
      "h": 38
@@ -492,7 +498,7 @@
    {
     "text": "Alimentos y Supermercado",
     "box": {
-     "x": 720,
+     "x": 512,
      "y": 207,
      "w": 200,
      "h": 38
@@ -505,7 +511,7 @@
    {
     "text": "1.85",
     "box": {
-     "x": 920,
+     "x": 712,
      "y": 207,
      "w": 138,
      "h": 38
@@ -518,7 +524,7 @@
    {
     "text": "No",
     "box": {
-     "x": 1058,
+     "x": 850,
      "y": 207,
      "w": 133,
      "h": 38
@@ -531,7 +537,7 @@
    {
     "text": "EUR",
     "box": {
-     "x": 1191,
+     "x": 983,
      "y": 207,
      "w": 200,
      "h": 38
@@ -544,7 +550,7 @@
    {
     "text": "0.00",
     "box": {
-     "x": 1391,
+     "x": 1183,
      "y": 207,
      "w": 100,
      "h": 38
@@ -557,7 +563,7 @@
    {
     "text": "0.00",
     "box": {
-     "x": 1491,
+     "x": 1283,
      "y": 207,
      "w": 126,
      "h": 38
@@ -570,7 +576,7 @@
    {
     "text": "0.00",
     "box": {
-     "x": 1617,
+     "x": 1409,
      "y": 207,
      "w": 153,
      "h": 38
@@ -583,7 +589,7 @@
    {
     "text": "0",
     "box": {
-     "x": 1770,
+     "x": 1562,
      "y": 207,
      "w": 129,
      "h": 38
@@ -596,7 +602,7 @@
    {
     "text": " ",
     "box": {
-     "x": 1899,
+     "x": 1691,
      "y": 207,
      "w": 147,
      "h": 38
@@ -621,59 +627,33 @@
    "height": 8
   }
  },
- "form": {
-  "box": {
-   "x": 286,
-   "y": 189,
-   "w": 1134,
-   "h": 594
-  },
-  "inputs": [],
-  "columns": [],
-  "decorations": [],
-  "required": [],
-  "unwrappedAsterisks": 0,
-  "linkGlyphs": 7,
-  "linkGlyphOpacity": 0,
-  "sections": []
- },
+ "form": null,
  "panes": {
   "form": null,
   "grid": {
-   "x": 304,
+   "x": 96,
    "y": 207,
-   "w": 1135,
-   "h": 575
+   "w": 1343,
+   "h": 277
   },
   "childStrip": {
-   "x": 260,
-   "y": 783,
-   "w": 1180,
+   "x": 52,
+   "y": 485,
+   "w": 1388,
    "h": 43
   },
   "childPane": {
-   "x": 260,
-   "y": 783,
-   "w": 1180,
-   "h": 34
+   "x": 52,
+   "y": 485,
+   "w": 1388,
+   "h": 332
   },
   "viewportHeight": 817
  },
- "statusBar": {
-  "box": {
-   "x": 266,
-   "y": 154,
-   "w": 1174,
-   "h": 30
-  },
-  "height": 30,
-  "title": null,
-  "largestText": null,
-  "texts": []
- },
+ "statusBar": null,
  "nav": {
   "collapsed": false,
-  "width": 260,
+  "width": 52,
   "itemHeight": 40,
   "topLevel": [
    {
@@ -717,6 +697,14 @@
     "current": false
    },
    {
+    "text": "Etendo RX",
+    "icon": "none",
+    "iconClass": "etskin-nav-icon-sec-star",
+    "height": 40,
+    "background": "rgba(0, 0, 0, 0)",
+    "current": false
+   },
+   {
     "text": "Material Requirement Planning",
     "icon": "none",
     "iconClass": "etskin-nav-icon-sec-clipboard",
@@ -744,6 +732,14 @@
     "text": "Financial Management",
     "icon": "none",
     "iconClass": "etskin-nav-icon-sec-card",
+    "height": 40,
+    "background": "rgba(0, 0, 0, 0)",
+    "current": false
+   },
+   {
+    "text": "Service",
+    "icon": "none",
+    "iconClass": "etskin-nav-icon-sec-tag",
     "height": 40,
     "background": "rgba(0, 0, 0, 0)",
     "current": false
@@ -781,6 +777,12 @@
     "current": false
    },
    {
+    "label": "Etendo RX",
+    "icon": "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 4l2.4",
+    "background": "color(srgb 0.0627451 0.0941176 0.156863 / 0.06)",
+    "current": false
+   },
+   {
     "label": "Material Requirement Planning",
     "icon": "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 4h6v3H",
     "background": "color(srgb 0.0627451 0.0941176 0.156863 / 0.06)",
@@ -803,74 +805,100 @@
     "icon": "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 6h18v1",
     "background": "color(srgb 0.0627451 0.0941176 0.156863 / 0.06)",
     "current": false
+   },
+   {
+    "label": "Service",
+    "icon": "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 4h7l9 ",
+    "background": "color(srgb 0.0627451 0.0941176 0.156863 / 0.06)",
+    "current": false
    }
   ],
   "searchPlaceholder": "Filter"
  },
  "paint": {
   "grid": {
-   "cols": 147,
+   "cols": 173,
    "rows": 95,
    "step": 8
   },
-  "contentArea": 897980,
+  "contentArea": 1056268,
   "byColour": [
    {
     "color": "255,255,255",
-    "share": 86.42,
+    "share": 70.48,
     "white": true
    },
    {
     "color": "245,246,250",
-    "share": 8.43,
+    "share": 12.95,
     "white": false
    },
    {
     "color": "224,231,255",
-    "share": 4.21,
+    "share": 10.53,
+    "white": false
+   },
+   {
+    "color": "233,239,253",
+    "share": 5.23,
     "white": false
    },
    {
     "color": "16,24,40",
-    "share": 0.95,
+    "share": 0.8,
     "white": false
    }
   ],
   "largestRegion": {
    "color": "255,255,255",
-   "share": 86.42,
+   "share": 30.35,
    "white": true
   },
   "largestColouredRegion": {
    "color": "224,231,255",
-   "share": 4.21
+   "share": 5.26
   },
-  "largestNonWhiteShare": 8.43,
+  "largestNonWhiteShare": 12.95,
   "lavenderElements": [
    {
     "cls": "OBTabSetMain",
-    "w": 1180,
+    "w": 1388,
     "h": 761
    },
    {
-    "cls": "",
-    "w": 1108,
-    "h": 45.95
+    "cls": "etskin-cop-log",
+    "w": 420,
+    "h": 697
+   },
+   {
+    "cls": "etskin-cop-side",
+    "w": 253,
+    "h": 817
    },
    {
     "cls": "OBTabBarChild",
-    "w": 1180,
+    "w": 1388,
     "h": 43
    },
    {
-    "cls": "OBStatusBar",
-    "w": 1174,
-    "h": 30
+    "cls": "OBTabBarChild",
+    "w": 1388,
+    "h": 43
    },
    {
     "cls": "OBGridFilterBase",
-    "w": 1172,
+    "w": 1380,
     "h": 22
+   },
+   {
+    "cls": "OBGridFilterBase",
+    "w": 1380,
+    "h": 22
+   },
+   {
+    "cls": "OBGridCellSelectedOver",
+    "w": 200,
+    "h": 38
    }
   ]
  },
@@ -878,7 +906,7 @@
   {
    "cls": "OBViewActive",
    "w": 3,
-   "h": 629,
+   "h": 331,
    "source": "background"
   }
  ],
@@ -892,9 +920,9 @@
   ],
   "sizeCounts": {
    "11": 5,
-   "12": 1,
-   "13": 31,
-   "12.5": 15
+   "12": 3,
+   "13": 30,
+   "12.5": 22
   },
   "uppercase": [],
   "weight700": []

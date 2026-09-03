@@ -1,14 +1,14 @@
 {
  "screen": "login",
  "href": "http://localhost:8888/etendo_skin/security/Login_FS.html",
- "recordedAt": "2026-09-03T13:40:04.148Z",
+ "recordedAt": "2026-09-03T16:19:10.645Z",
  "sources": {
-  "css/etendo-skin.css": "25cc75258c1b0faa2d0717218ef3c58cd3e81dd8a66a761702e8c715bc1c205b",
+  "css/etendo-skin.css": "c93a58a71db4a50f2aec8f598f1958e63eb2857f15552db054ec6403bb192509",
   "css/etendo-skin-login.css": "8b5fb761a21a7d3a8226686097cf3d199a8c9cd8df054d650f9d90112df027b6",
   "js/etendo-skin.js": "d95773431a321f018e144c0aeecf8ac2883c5333654ff152e1d6d558ef13f646",
-  "js/etendo-skin-nav.js": "19f711c77e6626da05eb129ff0fa9d8f5432f206265e258776160200990c2f0d",
-  "js/etendo-skin-topbar.js": "ec792c708043c6d997fef8af6a88e4848ff566f04cbdd3bfe87dd3c5456a6111",
-  "js/etendo-skin-toolbar.js": "0af41b2faedf0cfcd2437a8d68dca7aa42ec85a123ff7c34db4ac0b4c366d957",
+  "js/etendo-skin-nav.js": "4cbfd104457e8082eb7da5670d7bb6e63a86d57d3d24f6a688e5822196486c81",
+  "js/etendo-skin-topbar.js": "3c4911a5d77f98e9ce6e4dfc552073aaaa00de6a51985862ead684d0b3a30317",
+  "js/etendo-skin-toolbar.js": "0923c076168b49ff35ab1ef06f08a7a29a97f6439344ed9129ff910628759aa9",
   "js/etendo-skin-form.js": "a5af46ea8d058fdf36f9a653351a476717831474591af2027a0d82710688b06c",
   "js/etendo-skin-grid.js": "23411d6e6aaf9105fc3449ad271dd0075f6551e9203c959a63c4367ee3e6ea5c"
  },
