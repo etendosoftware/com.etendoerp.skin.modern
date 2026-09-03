@@ -1,14 +1,14 @@
 {
  "screen": "rail",
  "href": "http://localhost:8888/etendo_skin/#%7Bst:1,bm:%5B%7BviewId:__OBMyOpenbravoImplementation__,params:%7BmyOB:true,canClose:false,tabTitle:__Workspace__%7D%7D,%7BviewId:___167__,params:%7BwindowId:__167__,viewId:___167__,tabTitle:__Sales%20Invoice__%7D%7D%5D%7D",
- "recordedAt": "2026-09-03T13:39:58.676Z",
+ "recordedAt": "2026-09-03T16:19:05.163Z",
  "sources": {
-  "css/etendo-skin.css": "25cc75258c1b0faa2d0717218ef3c58cd3e81dd8a66a761702e8c715bc1c205b",
+  "css/etendo-skin.css": "c93a58a71db4a50f2aec8f598f1958e63eb2857f15552db054ec6403bb192509",
   "css/etendo-skin-login.css": "8b5fb761a21a7d3a8226686097cf3d199a8c9cd8df054d650f9d90112df027b6",
   "js/etendo-skin.js": "d95773431a321f018e144c0aeecf8ac2883c5333654ff152e1d6d558ef13f646",
-  "js/etendo-skin-nav.js": "19f711c77e6626da05eb129ff0fa9d8f5432f206265e258776160200990c2f0d",
-  "js/etendo-skin-topbar.js": "ec792c708043c6d997fef8af6a88e4848ff566f04cbdd3bfe87dd3c5456a6111",
-  "js/etendo-skin-toolbar.js": "0af41b2faedf0cfcd2437a8d68dca7aa42ec85a123ff7c34db4ac0b4c366d957",
+  "js/etendo-skin-nav.js": "4cbfd104457e8082eb7da5670d7bb6e63a86d57d3d24f6a688e5822196486c81",
+  "js/etendo-skin-topbar.js": "3c4911a5d77f98e9ce6e4dfc552073aaaa00de6a51985862ead684d0b3a30317",
+  "js/etendo-skin-toolbar.js": "0923c076168b49ff35ab1ef06f08a7a29a97f6439344ed9129ff910628759aa9",
   "js/etendo-skin-form.js": "a5af46ea8d058fdf36f9a653351a476717831474591af2027a0d82710688b06c",
   "js/etendo-skin-grid.js": "23411d6e6aaf9105fc3449ad271dd0075f6551e9203c959a63c4367ee3e6ea5c"
  },
@@ -34,10 +34,11 @@
     "color": "rgb(37, 99, 235)"
    }
   ],
-  "logoHeight": 1,
+  "logoHeight": 14,
   "imageHeights": [
    28,
    28,
+   14,
    1,
    6,
    6,
@@ -67,8 +68,12 @@
   "cluster": {
    "borderWidth": 0,
    "background": "rgba(0, 0, 0, 0)",
-   "buttons": 5,
+   "buttons": 6,
    "sizes": [
+    [
+     40,
+     40
+    ],
     [
      40,
      40
@@ -91,6 +96,7 @@
     ]
    ],
    "gaps": [
+    6,
     6,
     6,
     6,
@@ -708,6 +714,12 @@
     "current": false
    },
    {
+    "label": "Etendo RX",
+    "icon": "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 4l2.4",
+    "background": "color(srgb 0.0627451 0.0941176 0.156863 / 0.06)",
+    "current": false
+   },
+   {
     "label": "Material Requirement Planning",
     "icon": "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 4h6v3H",
     "background": "color(srgb 0.0627451 0.0941176 0.156863 / 0.06)",
@@ -728,6 +740,12 @@
    {
     "label": "Financial Management",
     "icon": "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 6h18v1",
+    "background": "color(srgb 0.0627451 0.0941176 0.156863 / 0.06)",
+    "current": false
+   },
+   {
+    "label": "Service",
+    "icon": "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 4h7l9 ",
     "background": "color(srgb 0.0627451 0.0941176 0.156863 / 0.06)",
     "current": false
    }
@@ -780,6 +798,16 @@
     "h": 761
    },
    {
+    "cls": "etskin-cop-log",
+    "w": 420,
+    "h": 697
+   },
+   {
+    "cls": "etskin-cop-side",
+    "w": 253,
+    "h": 817
+   },
+   {
     "cls": "",
     "w": 1316,
     "h": 45.95
@@ -798,6 +826,11 @@
     "cls": "OBGridFilterBase",
     "w": 1380,
     "h": 22
+   },
+   {
+    "cls": "etskin-cop-assistant etskin-cop-assistant-on",
+    "w": 232,
+    "h": 28
    }
   ]
  },
@@ -818,7 +851,7 @@
    13
   ],
   "sizeCounts": {
-   "11": 10,
+   "11": 12,
    "12": 1,
    "13": 22,
    "12.5": 15
