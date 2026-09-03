@@ -78,8 +78,13 @@
  * Fallbacks only. etendo-skin.js overwrites these on <html> from the ETSKIN_Theme preference, so
  * the palette changes per client without recompiling anything. Keeping real values here means a
  * JS failure degrades to a sane theme instead of an unstyled page.
+ *
+ * They sit on :root rather than on .etskin-on because the boot screen at the bottom of this file
+ * paints before any script has run and therefore before that class exists. Custom properties are
+ * inert until something reads them, so declaring them unconditionally costs a disabled client
+ * nothing.
  */
-.etskin-on {
+:root {
   --sk-primary: #2563eb;
   --sk-on-primary: #ffffff;
   --sk-accent: #1e293b;
@@ -1210,6 +1215,107 @@
 .etskin-on .OBLoadingPromptLabel {
   font-family: var(--sk-font);
   color: var(--sk-primary);
+}
+
+/* ----------------------------------------------------------- boot screen */
+
+/*
+ * index.jsp paints a boot screen before a single line of our JavaScript has run: a white sheet,
+ * the word LOADING in 12px Arial and a 220x16 animated GIF from the SmartClient skin folder. It is
+ * the first thing anyone sees and it belonged to a different decade.
+ *
+ * Two things follow from when it renders. It cannot be scoped under .etskin-on, because the script
+ * that adds that class is the very last thing the page loads - so, like the login page, the boot
+ * screen is not per client and takes the default palette. And it has to be addressed through
+ * #OBLoadingDiv: .OBLoadingPromptModalMask and .OBLoadingPromptLabel are also SmartClient's
+ * mainLayoutStyleName and loadingTextStyleName for the in-application loading prompt (see
+ * ob-application-styles.js), and that one must keep behaving as it does.
+ *
+ * index.jsp declares its own copy of these rules in an inline <style> after our <link>, so equal
+ * specificity would lose. The id carries the weight; nothing here needs !important.
+ *
+ * The markup is untouched. The table holding LOADING and the GIF is simply not displayed, and the
+ * mark and the progress bar are two pseudo elements on the box that held it. Hiding rather than
+ * rewording also sidesteps a small trap: that string is hardcoded English in the template, so any
+ * label we put back through content: would be untranslatable.
+ */
+
+#OBLoadingDiv {
+  position: fixed;
+  inset: 0;
+  /* Stock leaves the mask at the default stacking level and only lifts the box inside it, which
+     works right up to the moment OB.Layout.draw() starts creating canvases with six figure
+     z-indexes - the half drawn application then shows through the mask it is supposed to be
+     hidden behind. One below the box it contains is enough to close that window. */
+  z-index: 999999;
+  background-color: var(--sk-canvas-tint);
+  background-image: linear-gradient(var(--sk-canvas) 0%, var(--sk-canvas-tint) 82%);
+}
+
+#OBLoadingDiv .OBCenteredBox {
+  /* The stock box is 300x50 centred by a negative margin. Nothing goes in it any more, so it
+     shrinks to its content and centres on the transform instead. */
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: auto;
+  height: auto;
+  margin: 0;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+}
+
+#OBLoadingDiv table {
+  display: none;
+}
+
+/* The same mark the login page shows, so the two screens are one sequence. */
+#OBLoadingDiv .OBCenteredBox::before {
+  content: "";
+  width: 191px;
+  height: 43px;
+  background-image: url(./../../images/etendo/EtendoWithVersion_Logo.png);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}
+
+/*
+ * An indeterminate bar rather than a spinner: boot takes a few seconds and a bar reads as progress
+ * where a spinner reads as a stall. It is one element - the track is the background colour, the
+ * head is a gradient 45% as wide sliding across it.
+ */
+#OBLoadingDiv .OBCenteredBox::after {
+  content: "";
+  width: 208px;
+  height: 3px;
+  border-radius: 999px;
+  background-color: color-mix(in srgb, var(--sk-primary) 15%, transparent);
+  background-image: linear-gradient(90deg, transparent 0%, var(--sk-primary) 50%, transparent 100%);
+  background-repeat: no-repeat;
+  background-size: 45% 100%;
+  animation: etskin-boot-bar 1150ms ease-in-out infinite;
+}
+
+@keyframes etskin-boot-bar {
+  from {
+    background-position: -60% 0;
+  }
+
+  to {
+    background-position: 160% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #OBLoadingDiv .OBCenteredBox::after {
+    animation: none;
+    background-image: none;
+    background-color: color-mix(in srgb, var(--sk-primary) 40%, transparent);
+  }
 }
 
 /* ----------------------------------------------------------- accessibility */

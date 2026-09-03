@@ -140,6 +140,37 @@ framework is counting on, so the sheet-on-a-desk look is built out of things tha
   white sheet with the accent along its bottom edge, while the selected *child* tab is marked only
   by being the lightest of three fills over the band. Neither uses a colour change on the label.
 
+### The boot screen
+
+`index.jsp` paints a screen before any of this module's JavaScript has run: a white sheet, the word
+`LOADING...` in 12px Arial and a 220x16 animated GIF. It is the first thing anyone sees, so it is
+restyled here — a desk gradient, the Etendo mark and a slim indeterminate bar, with the stock text
+and GIF hidden.
+
+Three things make it unlike the rest of the stylesheet:
+
+- **It is not scoped under `.etskin-on`.** That class is added by `etendo-skin.js`, which is the last
+  resource in the bundle; by the time it runs the boot screen is nearly over. So these rules apply
+  unconditionally, exactly like the login page.
+- **The palette tokens therefore live on `:root`, not on `.etskin-on`.** Custom properties are inert
+  until something reads them, so declaring them unconditionally costs a client that has the skin
+  turned off nothing at all.
+- **Everything is scoped to `#OBLoadingDiv`.** `.OBLoadingPromptModalMask` and
+  `.OBLoadingPromptLabel` are not only the boot markup's classes — they are also SmartClient's
+  `mainLayoutStyleName` and `loadingTextStyleName` (`ob-application-styles.js`), used for the
+  *in-application* loading prompt. Styling the bare classes would repaint that too. The id is also
+  what supplies the specificity: `index.jsp` repeats its own copy of these rules in an inline
+  `<style>` that comes *after* the kernel's stylesheet `<link>`, so an equal-specificity rule loses.
+
+The mask gets an explicit `z-index`. Stock leaves it at the default stacking level and only lifts
+the box inside it, which holds right up to the moment `OB.Layout.draw()` starts creating canvases
+with six-figure z-indexes — the half-drawn application then shows through the mask that is supposed
+to be covering it.
+
+The markup is untouched: the `LOADING...` string is hardcoded English in `index.jsp`, so replacing
+it through `content:` would trade an ugly translated string for an untranslatable one. It is hidden
+instead, and the bar carries the meaning.
+
 ## Conventions the stylesheet follows
 
 - **Attribute selectors over class lists.** SmartClient class names carry combinatorial state
