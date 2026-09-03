@@ -14,6 +14,7 @@ The palette is chosen by configuration, not by editing CSS.
 | `web/com.etendoerp.skin.modern/css/etendo-skin.css` | The whole application skin, authored against CSS custom properties. |
 | `web/com.etendoerp.skin.modern/js/etendo-skin.js` | Resolves the palette per session and writes the custom properties onto `<html>`. Also overrides the SmartClient sizes that live in JS rather than CSS. |
 | `web/com.etendoerp.skin.modern/js/etendo-skin-nav.js` | Builds the left navigation panel out of `OB.Application.menu`. Loaded after the script above and stands down unless it ran. |
+| `web/com.etendoerp.skin.modern/js/etendo-skin-topbar.js` | Reorders the top bar and sizes its buttons. Same rule: it stands down unless `etendo-skin.js` ran. |
 | `web/com.etendoerp.skin.modern/css/etendo-skin-login.css` | The login page, loaded by a `<link>` in `Login.html`. |
 | `web/com.etendoerp.skin.modern/fonts/` | Inter, self hosted. Two woff2 subsets, declared by both stylesheets. |
 
@@ -227,6 +228,48 @@ sight or expand the folders above it on every tab switch: the folder containing 
 tinted instead, which points at it without fighting a user who just collapsed that folder. And it
 matches the open tab to a menu row by title, because a title is all a tab and a menu node reliably
 share.
+
+### The navigation bar
+
+The reference puts the brand on the left and gathers everything else into a pill of round buttons
+on the right. Stock Etendo does the opposite - `OB.TopLayout` is `[left spacer, navbar, middle
+spacer, logos]`, so the buttons lead and the logos hug the right edge - and the buttons themselves
+are a row of labelled text: `Alerts (1)`, `Help`, `admin`.
+
+Almost all of that is a stylesheet problem. Two things are not, and they are the whole of
+`etendo-skin-topbar.js`:
+
+- **Order.** The panes are absolutely positioned, so no amount of CSS reorders them. The members
+  are re-ordered to `[logos, spacers, navbar]` - the *same* canvases, moved rather than rebuilt, so
+  `OB.TopLayout.CompanyImageLogo` and `OB.TopLayout.OpenbravoLogo` remain the objects core handed
+  out and anything holding a reference to them still works. The logo container was built to hug the
+  right, so it is flipped to `left`, where it becomes the brand.
+- **Measurements.** SmartClient writes `width` and `height` inline after measuring, and it measures
+  a toolstrip member by what that member *draws*. The profile button is the case in point: it is
+  40px wide and still measured 59, because the hidden menu arrow keeps its slot. Each button is
+  therefore sized in JS and its wrapper set to `overflow: hidden`, which is what gives the row its
+  even 44px pitch.
+
+Everything else - the pill, the round chips, the fills, the hover and selected states - is CSS.
+
+The labels become icons. `Alerts (1)`, `Help` and the logout image get a masked glyph and lose
+their text; `admin` becomes an `AD` monogram over a tinted disc, the same device the collapsed rail
+uses. The glyph is drawn on the wrapper rather than on the label, because a SmartClient button is a
+table and the styleName lands on the label cell, its spacer cells *and* the icon slot alike - mask
+"the cell" and four overlapping copies of the icon appear, which is exactly what the first attempt
+looked like.
+
+Two behaviours are preserved rather than reimplemented. The alert count is not thrown away: core
+refreshes it by calling `setTitle` with a translated `Alerts (n)`, so `setTitle` is wrapped to read
+the number out, hang a red dot on the button when it is above zero and move the original string to
+the tooltip - which says more than the truncated label did and costs no width. And `OBQuickRun`
+swaps the wrapper's whole `styleName` when a panel opens, which would drop the marker classes, so
+`setStyleName` is wrapped to re-append them.
+
+Anything the skin does not recognise - the debug menu that `com.smf.smartclient.debugtools` adds,
+for one - keeps its width and gets the chip styling as text. That menu is added *after*
+`OB.Layout.initialize`, so `OB.NavBar.addMembers` is wrapped too and late arrivals are dressed on
+the way in.
 
 ### The boot screen
 
