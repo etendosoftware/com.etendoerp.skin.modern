@@ -121,6 +121,41 @@
     return String(button.prompt || button.buttonType || '');
   }
 
+  // --------------------------------------------------------- process buttons
+
+  /*
+   * isA rather than getClassName, so a module that subclasses the stock button is still
+   * recognised as one.
+   */
+  function isActionButton(canvas) {
+    if (isc.isA && isc.isA.OBToolbarActionButton) {
+      return !!isc.isA.OBToolbarActionButton(canvas);
+    }
+    return !!canvas.getClassName && canvas.getClassName() === 'OBToolbarActionButton';
+  }
+
+  function actionButtons(toolbar) {
+    var members = toolbar.rightMembers || [];
+    var only = [];
+    var i;
+    for (i = 0; i < members.length; i++) {
+      if (isActionButton(members[i])) {
+        only.push(members[i]);
+      }
+    }
+    return only;
+  }
+
+  /*
+   * Whether the window would have put this process button on the strip for the record that is
+   * open now. updateState computes displayIf and then ends in show() or hide(), so visibility is
+   * where the answer lands; the flag it sets on the way is what says the answer was computed at
+   * all, and a button no refresh has reached yet must not be offered as if it had passed.
+   */
+  function shown(button) {
+    return button.visible === true && (!button.isVisible || button.isVisible());
+  }
+
   // ------------------------------------------------------------- DOM marking
 
   /*
@@ -155,6 +190,22 @@
   }
 
   /*
+   * Marks a canvas as something the stock toolbar loops may walk over but must not act on.
+   * refreshCustomButtons disables and re-enables the keyboard shortcut of every entry of
+   * rightMembers, and the count readout is a Label, which has no shortcut to disable. A pair of
+   * no-ops there is cheaper - and far less brittle - than teaching that loop about this file.
+   */
+  function inert(canvas) {
+    if (!canvas.disableShortcut) {
+      canvas.disableShortcut = function () {};
+    }
+    if (!canvas.enableShortcut) {
+      canvas.enableShortcut = function () {};
+    }
+    return canvas;
+  }
+
+  /*
    * Width is re-asserted rather than set once. The buttons are sized before stock initWidget runs,
    * which is the only moment their order can be rewritten, but a Layout that has already measured
    * its members keeps the size it measured; re-applying after the toolbar is built, and again on
@@ -180,7 +231,7 @@
     var i, entry;
     for (i = 0; i < entries.length; i++) {
       entry = entries[i];
-      if (entry.button.isVisible && !entry.button.isVisible() && entry.honourVisible) {
+      if (entry.honourVisible && !shown(entry.button)) {
         continue;
       }
       data.push({
@@ -200,20 +251,39 @@
     if (data.length === 0) {
       data.push({ title: skinLabel('empty', 'Nothing available here'), enabled: false });
     }
+    /*
+     * A Menu is a ListGrid, and styleName only reaches its outer element - the one the body is
+     * positioned inside. What is seen is the body, whose class comes from bodyStyleName, and
+     * which the stock skin paints as a bordered panel with a grey gradient gutter down its left
+     * edge; that gutter is the icon column, and it is drawn whether or not any item has an icon.
+     * None of these items has one, and none has a submenu or a keyboard shortcut either, so the
+     * three columns that would carry them are turned off and the body is named for the skin. The
+     * shadow is the stylesheet's, not the framework's stack of translucent images.
+     */
     return isc.Menu.create({
       autoDraw: false,
-      showShadow: true,
-      shadowDepth: 10,
+      showShadow: false,
+      showIcons: false,
+      showKeys: false,
+      showSubmenus: false,
       styleName: 'etskin-menu',
-      cellHeight: 30,
-      width: 220,
+      bodyStyleName: 'etskin-menuBody',
+      iconBodyStyleName: 'etskin-menuBody',
+      cellHeight: 32,
+      width: 240,
       data: data
     });
   }
 
   function openMenu(menu, anchor) {
     var box = anchor.getPageRect();
-    menu.setWidth(Math.max(200, menu.getWidth()));
+    // The menu is rebuilt on every open, because the state it reports is only true for the record
+    // that is open now. The one it replaces is discarded rather than left behind hidden.
+    if (anchor.etskinMenu && anchor.etskinMenu !== menu && anchor.etskinMenu.destroy) {
+      anchor.etskinMenu.destroy();
+    }
+    anchor.etskinMenu = menu;
+    menu.setWidth(Math.max(220, menu.getWidth()));
     menu.showNextTo(anchor, 'bottom');
     // showNextTo aligns left edges; the overflow and Actions buttons both sit far enough right
     // that a left aligned menu would hang off the window, so it is pulled back under the button.
@@ -261,7 +331,7 @@
    * Written by etendo-skin-grid.js, which reaches it through toolbar.etskinCount.
    */
   function countReadout() {
-    return isc.Label.create({
+    return inert(isc.Label.create({
       autoDraw: false,
       width: COUNT_WIDTH,
       height: ICON,
@@ -270,11 +340,34 @@
       wrap: false,
       styleName: 'etskin-tb-count',
       contents: ''
-    });
+    }));
+  }
+
+  /*
+   * Re-evaluates displayIf for the record that is open now, synchronously and from values the
+   * browser already holds - which is what refreshCustomButtonsView is for. The framework does the
+   * same thing on every record and selection change, so this normally confirms what is already
+   * there; it is what makes the first open of a window, before anything has changed, right too.
+   */
+  function refreshState(toolbar, buttons) {
+    var seen = [];
+    var i, context;
+    for (i = 0; i < buttons.length; i++) {
+      context = buttons[i].contextView;
+      if (context && seen.indexOf(context) === -1) {
+        seen.push(context);
+        try {
+          toolbar.refreshCustomButtonsView(context);
+        } catch (e) {
+          // Then the menu reports the state of the last refresh, which is the state the stock
+          // buttons would have been in as well.
+        }
+      }
+    }
   }
 
   function actionsButton(toolbar) {
-    return isc.OBToolbarIconButton.create({
+    return inert(isc.OBToolbarIconButton.create({
       autoDraw: false,
       buttonType: 'etskinActions',
       width: ACTIONS_WIDTH,
@@ -282,22 +375,23 @@
       title: skinLabel('actions', 'Actions'),
       prompt: skinLabel('actionsPrompt', 'Actions available for this record'),
       action: function () {
+        var buttons = actionButtons(toolbar);
         var entries = [];
-        var members = toolbar.rightMembers || [];
         var i, button;
-        for (i = 0; i < members.length; i++) {
-          button = members[i];
-          if (button.getClassName && button.getClassName() === 'OBToolbarActionButton') {
-            entries.push({
-              button: button,
-              title: String(button.realTitle || button.originalTitle || button.title || ''),
-              honourVisible: true
-            });
-          }
+        refreshState(toolbar, buttons);
+        for (i = 0; i < buttons.length; i++) {
+          button = buttons[i];
+          entries.push({
+            button: button,
+            // updateState rewrites the title from the document's status - Complete becomes
+            // Reactivate on a completed invoice - so realTitle is read after the refresh above.
+            title: String(button.realTitle || button.originalTitle || button.title || ''),
+            honourVisible: true
+          });
         }
         openMenu(menuFrom(entries), this);
       }
-    });
+    }));
   }
 
   /*
@@ -393,6 +487,12 @@
     right.push(button);
     for (i = 0; i < VIEW.length; i++) {
       if (byType[VIEW[i]]) {
+        // Actions is a labelled pill and the view controls are bare glyphs; abutting them reads
+        // as one control with a word stuck to it. The rule that separates the groups on the left
+        // separates these two as well.
+        if (right[right.length - 1] === button) {
+          right.push(inert(divider()));
+        }
         byType[VIEW[i]].setWidth(ICON);
         /*
          * manageviews is an icon button by class but a menu button by style: it keeps its
@@ -408,7 +508,7 @@
           }
         }
         mark(byType[VIEW[i]], 'right', classes, ICON);
-        right.push(byType[VIEW[i]]);
+        right.push(inert(byType[VIEW[i]]));
       }
     }
 
@@ -434,14 +534,47 @@
     var i, button;
     for (i = 0; i < members.length; i++) {
       button = members[i];
-      if (button.getClassName && button.getClassName() === 'OBToolbarActionButton' &&
+      if (isActionButton(button) &&
           toolbar.getMemberNumber && toolbar.getMemberNumber(button) >= 0) {
         drawn.push(button);
       }
     }
     if (drawn.length > 0) {
       toolbar.removeMembers(drawn);
+      for (i = 0; i < drawn.length; i++) {
+        detach(drawn[i]);
+      }
     }
+  }
+
+  /*
+   * Off the strip, a process button is no longer a widget: it is where its display logic keeps its
+   * answer, and the menu is what draws that answer. It still has to accept show and hide, because
+   * that is how updateState records the answer, but a canvas with no parent that is told to show
+   * draws itself wherever it happens to be - which is the top left corner of the page, over the
+   * logo. So the two methods keep their meaning and lose their side effect. Everything else about
+   * the button is untouched: its title still changes, its shortcut still fires, isVisible and
+   * isDisabled still answer for it.
+   */
+  function detach(button) {
+    if (button.etskinDetached) {
+      return button;
+    }
+    button.etskinDetached = true;
+    button.show = function () {
+      this.visible = true;
+      this.visibility = isc.Canvas.INHERIT;
+      return this;
+    };
+    button.hide = function () {
+      this.visible = false;
+      this.visibility = isc.Canvas.HIDDEN;
+      return this;
+    };
+    if (button.isDrawn && button.isDrawn() && button.clear) {
+      button.clear();
+    }
+    return button;
   }
 
   function restamp(toolbar) {
@@ -464,14 +597,7 @@
    */
   function amongActionButtons(toolbar, original, args) {
     var all = toolbar.rightMembers || [];
-    var only = [];
-    var i;
-    for (i = 0; i < all.length; i++) {
-      if (all[i].getClassName && all[i].getClassName() === 'OBToolbarActionButton') {
-        only.push(all[i]);
-      }
-    }
-    toolbar.rightMembers = only;
+    toolbar.rightMembers = actionButtons(toolbar);
     try {
       return original.apply(toolbar, args);
     } finally {
@@ -510,6 +636,19 @@
             // A process button left on the strip is ugly, not broken.
           }
           return result;
+        },
+
+        /*
+         * Stock reads this to walk the process buttons and refresh each one's display logic
+         * against its view: the loop asks every entry for its contextView and then for that
+         * view's state. This file also parks its own canvases in rightMembers - the count
+         * readout, the Actions button, the view icons - because that array is what initWidget
+         * lays out, and none of them belongs to a view. Returning only the process buttons is
+         * what stock already assumes it is getting, and it is what keeps that refresh - the one
+         * that decides which options the record allows - running at all.
+         */
+        getRightMembers: function () {
+          return actionButtons(this);
         },
 
         defineRightMembersShortcuts: function () {

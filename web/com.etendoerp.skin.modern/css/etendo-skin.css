@@ -1317,7 +1317,12 @@
  */
 .etskin-on .OBMyOBLeftColumn {
   background-color: var(--sk-surface);
-  border-inline-end: 1px solid var(--sk-border);
+  /*
+   * The column is now a drawer on the trailing edge, opened by Manage workspace and closed the
+   * rest of the time, so the rule that separated it from the portal moves to the side it is
+   * actually on.
+   */
+  border-inline-start: 1px solid var(--sk-border);
 }
 
 /*
@@ -1385,6 +1390,49 @@
   mask-size: 14px 14px;
   -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 5v14 M5 12h14'/%3E%3C/svg%3E");
   mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 5v14 M5 12h14'/%3E%3C/svg%3E");
+}
+
+/*
+ * Widget chrome. The widgets themselves are the framework's - a widget is a class registered in
+ * the application dictionary and it keeps every behaviour it has - but a widget sitting under the
+ * dashboard cards has to read as the same kind of object as one of them. Stock outlines it in 1px
+ * of the Etendo navy with a 16px navy title, which is the heaviest border on any screen, and
+ * leaves the header transparent so the desk colour shows through it.
+ */
+.etskin-on .OBWidgetHeader {
+  background-color: var(--sk-surface);
+  border-color: var(--sk-border);
+  border-width: 1px 1px 0 1px;
+  border-radius: var(--sk-radius) var(--sk-radius) 0 0;
+}
+
+.etskin-on .OBWidgetBody {
+  background-color: var(--sk-surface);
+  border-color: var(--sk-border);
+  border-width: 0 1px 1px 1px;
+  border-radius: 0 0 var(--sk-radius) var(--sk-radius);
+  margin-bottom: 0;
+}
+
+.etskin-on .OBWidgetHeaderText {
+  font-family: var(--sk-font);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 20px;
+  color: var(--sk-text);
+  padding-left: 14px;
+}
+
+/* Stock gives the header icons a green outline and the close icon an orange one. */
+.etskin-on [class^="OBWidgetIcon"] {
+  border-color: transparent !important;
+}
+
+.etskin-on .OBWidgetMenu {
+  background-color: var(--sk-surface);
+  border: 1px solid var(--sk-border);
+  border-radius: var(--sk-radius-sm);
+  box-shadow: var(--sk-shadow-md);
 }
 
 /* -------------------------------------------------------------- statusbar */
@@ -2518,12 +2566,18 @@
   background-color: var(--sk-primary-softer);
 }
 
+/*
+ * The label cell is left-aligned inline by the framework and starts flush against the pill's
+ * border, so the inset is put back here; the end padding is the chevron's room plus the gap that
+ * keeps the word off it.
+ */
 .etskin-on .etskin-tb-actions [class^="OBToolbarIconButton"] {
   font-family: var(--sk-font);
   font-size: 13px;
   font-weight: 500;
   color: var(--sk-text);
-  padding-inline-end: 16px;
+  padding-inline-start: 14px;
+  padding-inline-end: 24px;
 }
 
 /* The chevron, drawn on the wrapper so it does not disturb the label cell's centring. */
@@ -2556,31 +2610,361 @@
 
 /* ---------------------------------------------------------- toolbar menus */
 
-.etskin-on .etskin-menu,
-.etskin-on [class^="etskin-menu"] {
+/*
+ * A SmartClient menu is a grid, and the class given to it lands on the outer element that merely
+ * positions the thing - never on what is seen. The panel is the grid's body, named through
+ * bodyStyleName, and the rows are its cells, which keep the framework's own class no matter what
+ * the menu is called. So the outer element is emptied, the body is given the card, and the cells
+ * are addressed by the framework's name for them, scoped inside the body so that only the menus
+ * this skin opens are touched and the ones the platform opens elsewhere are left alone.
+ */
+.etskin-on .etskin-menu {
+  background: transparent none;
+  border: 0 none;
+  box-shadow: none;
+}
+
+.etskin-on .etskin-menuBody {
   background-color: var(--sk-surface);
   border: 1px solid var(--sk-border);
   border-radius: var(--sk-radius);
   box-shadow: var(--sk-shadow-md);
-  padding: 4px;
+  padding: 4px 0;
+  overflow: hidden;
 }
 
-.etskin-on .etskin-menuTable,
-.etskin-on [class^="etskin-menu"] table {
-  border-collapse: separate;
+.etskin-on .etskin-menuBody table {
+  border-collapse: collapse;
+  background: transparent none;
 }
 
-.etskin-on [class^="etskin-menu"] td {
+/*
+ * menuTitleField is the framework's name for the label column; the suffixes it appends carry the
+ * row's state - Over, Disabled, Selected - so the prefix catches every one of them. The stock skin
+ * paints those states with gradient images, inset shadows and a border, all of which have to be
+ * named to be undone.
+ */
+.etskin-on .etskin-menuBody [class^="menuTitleField"],
+.etskin-on .etskin-menuBody [class^="menuIconField"],
+.etskin-on .etskin-menuBody [class^="menuKeyField"],
+.etskin-on .etskin-menuBody [class^="menuSubmenuField"] {
   font-family: var(--sk-font);
   font-size: 13px;
+  font-weight: 400;
+  line-height: 1.4;
   color: var(--sk-text);
-  background-color: transparent;
+  background: transparent none;
   border: 0 none;
-  padding: 0 10px;
+  box-shadow: none;
+  padding: 0 14px;
+  white-space: nowrap;
 }
 
-.etskin-on [class^="etskin-menu"] tr:hover td {
-  background-color: var(--sk-primary-soft);
+.etskin-on .etskin-menuBody [class^="menuTitleField"]:hover,
+.etskin-on .etskin-menuBody [class$="Over"] {
+  background: var(--sk-primary-soft) none;
+  color: var(--sk-text);
+}
+
+/*
+ * A process the record does not allow yet is still worth showing, because its absence is harder
+ * to read than its presence: greyed out says not now, while nothing at all says never.
+ */
+.etskin-on .etskin-menuBody [class$="Disabled"],
+.etskin-on .etskin-menuBody [class$="DisabledOver"] {
+  color: var(--sk-text-faint);
+  background: transparent none;
+  cursor: default;
+}
+
+/* --------------------------------------------------- workspace dashboard */
+
+/*
+ * The dashboard is one canvas of HTML, laid out with grid rather than with nested SmartClient
+ * layouts: sixteen cards would otherwise be sixteen absolutely positioned widgets that have to be
+ * remeasured on every resize, and none of them would reflow on a narrow window.
+ */
+.etskin-on .etskinDashCanvas {
+  background-color: transparent;
+}
+
+.etskin-on .etskin-dash {
+  box-sizing: border-box;
+  padding: 20px 24px 24px;
+  font-family: var(--sk-font);
+  color: var(--sk-text);
+}
+
+.etskin-on .etskin-dash *,
+.etskin-on .etskin-dash *::before,
+.etskin-on .etskin-dash *::after {
+  box-sizing: border-box;
+}
+
+.etskin-on .etskin-dash-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.etskin-on .etskin-dash-hello {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.etskin-on .etskin-dash-meta {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--sk-text-muted);
+}
+
+.etskin-on .etskin-dash-acts {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 8px;
+}
+
+.etskin-on .etskin-dash-act {
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--sk-border);
+  border-radius: var(--sk-radius-sm);
+  background-color: var(--sk-surface);
+  color: var(--sk-text);
+  font-family: var(--sk-font);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease;
+}
+
+.etskin-on .etskin-dash-act:hover {
+  border-color: var(--sk-border-strong);
+  background-color: var(--sk-neutral-softer);
+}
+
+.etskin-on .etskin-dash-act-quiet {
+  border-color: transparent;
+  background-color: transparent;
+  color: var(--sk-text-muted);
+}
+
+.etskin-on .etskin-dash-act:focus-visible,
+.etskin-on .etskin-dash-more:focus-visible,
+.etskin-on .etskin-dash-kpi:focus-visible,
+.etskin-on .etskin-dash-row:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--sk-focus-ring);
+}
+
+/* Four across on a full window, two on a half one, one on a narrow one - without a media query. */
+.etskin-on .etskin-dash-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.etskin-on .etskin-dash-kpi {
+  padding: 14px 16px;
+  border: 1px solid var(--sk-border);
+  border-radius: var(--sk-radius);
+  background-color: var(--sk-surface);
+  cursor: pointer;
+  transition: border-color 120ms ease, box-shadow 120ms ease, transform 120ms ease;
+}
+
+.etskin-on .etskin-dash-kpi:hover {
+  border-color: var(--sk-border-strong);
+  box-shadow: var(--sk-shadow-md);
+  transform: translateY(-1px);
+}
+
+.etskin-on .etskin-dash-kpi-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--sk-text-muted);
+}
+
+/*
+ * Figures are the one place on the screen where the digits have to line up between cards, so they
+ * are the one place that asks for tabular numerals.
+ */
+.etskin-on .etskin-dash-kpi-value {
+  margin-top: 8px;
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15;
+}
+
+.etskin-on .etskin-dash-kpi-foot {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--sk-text-muted);
+}
+
+/* The money the company is owed is the one figure that carries the primary colour. */
+.etskin-on .etskin-dash-kpi-accent .etskin-dash-kpi-value {
+  color: var(--sk-primary);
+}
+
+/*
+ * A currency code is a unit, not a value: same colour as the caption around it, so it never
+ * competes with the number it belongs to.
+ */
+.etskin-on .etskin-dash-cur {
+  font-size: 0.8em;
+  font-weight: 500;
+  color: var(--sk-text-faint);
+}
+
+.etskin-on .etskin-dash-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.etskin-on .etskin-dash-card {
+  border: 1px solid var(--sk-border);
+  border-radius: var(--sk-radius);
+  background-color: var(--sk-surface);
+  overflow: hidden;
+}
+
+.etskin-on .etskin-dash-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--sk-border);
+}
+
+.etskin-on .etskin-dash-card-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.etskin-on .etskin-dash-more {
+  padding: 3px 6px;
+  border: 0 none;
+  border-radius: var(--sk-radius-sm);
+  background-color: transparent;
+  color: var(--sk-primary);
+  font-family: var(--sk-font);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.etskin-on .etskin-dash-more:hover {
+  background-color: var(--sk-primary-softer);
+}
+
+.etskin-on .etskin-dash-rows {
+  padding: 4px 0;
+}
+
+.etskin-on .etskin-dash-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 16px;
+  cursor: pointer;
+}
+
+.etskin-on .etskin-dash-row:hover {
+  background-color: var(--sk-primary-softer);
+}
+
+.etskin-on .etskin-dash-row-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.etskin-on .etskin-dash-row-title,
+.etskin-on .etskin-dash-row-sub {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.etskin-on .etskin-dash-row-title {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.etskin-on .etskin-dash-row-sub {
+  font-size: 12px;
+  color: var(--sk-text-muted);
+}
+
+.etskin-on .etskin-dash-row-side {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: flex-end;
+  white-space: nowrap;
+}
+
+.etskin-on .etskin-dash-row-value {
+  font-size: 13px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.etskin-on .etskin-dash-row-meta {
+  font-size: 11px;
+  color: var(--sk-text-faint);
+}
+
+/* An empty list still has to say something, and what it says is not a row you can click. */
+.etskin-on .etskin-dash-row-quiet,
+.etskin-on .etskin-dash-row-quiet:hover {
+  padding: 13px 16px;
+  background-color: transparent;
+  color: var(--sk-text-faint);
+  font-size: 12px;
+  cursor: default;
+}
+
+/*
+ * Every figure is a request, and the four of them answer at different moments. A bar that pulses
+ * where the number will be says the card is working; an empty card says it is broken.
+ */
+.etskin-on .etskin-dash-skel {
+  display: inline-block;
+  width: 96px;
+  height: 13px;
+  border-radius: var(--sk-radius-sm);
+  background-color: var(--sk-neutral-soft);
+  animation: etskin-dash-pulse 1200ms ease-in-out infinite;
+}
+
+.etskin-on .etskin-dash-kpi-value .etskin-dash-skel {
+  width: 132px;
+  height: 20px;
+}
+
+@keyframes etskin-dash-pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 /* ----------------------------------------------------------- accessibility */
