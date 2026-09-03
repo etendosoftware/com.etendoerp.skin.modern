@@ -414,12 +414,26 @@
    * home screen is the one place every session starts. The button is emitted only if the script
    * that answers for it is in the bundle, so a partial install shows no dead control.
    */
+  /*
+   * The screens this skin adds that are not windows - the till and the order board - have no menu
+   * entry to be reached from, so the dashboard header is their entry point. Each button is emitted
+   * only if its view actually loaded, because a button for a screen that is not there is worse
+   * than no button.
+   */
   function appHtml() {
-    if (!OB.ETSkin || !OB.ETSkin.openPOS) {
+    var html = '';
+    if (!OB.ETSkin) {
       return '';
     }
-    return '<button type="button" class="etskin-dash-act etskin-dash-act-app" data-act="pos">' +
-      esc(skinLabel('posTitle', 'Point of Sale')) + '</button>';
+    if (OB.ETSkin.openPOS) {
+      html += '<button type="button" class="etskin-dash-act etskin-dash-act-app" data-act="pos">' +
+        esc(skinLabel('posTitle', 'Point of Sale')) + '</button>';
+    }
+    if (OB.ETSkin.openOrderBoard) {
+      html += '<button type="button" class="etskin-dash-act etskin-dash-act-app" ' +
+        'data-act="board">' + esc(skinLabel('boardTitle', 'Sales Order Board')) + '</button>';
+    }
+    return html;
   }
 
   function headHtml() {
@@ -789,6 +803,11 @@
       case 'pos':
         if (OB.ETSkin && OB.ETSkin.openPOS) {
           OB.ETSkin.openPOS();
+        }
+        return;
+      case 'board':
+        if (OB.ETSkin && OB.ETSkin.openOrderBoard) {
+          OB.ETSkin.openOrderBoard();
         }
         return;
       case 'open':
