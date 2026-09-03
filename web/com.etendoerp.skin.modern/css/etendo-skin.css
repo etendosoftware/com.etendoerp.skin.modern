@@ -1983,6 +1983,189 @@
   height: 20px;
 }
 
+/* -------------------------------------------------------- toolbar groups */
+
+/*
+ * The strip is arranged by etendo-skin-toolbar.js, which marks each wrapper with the group it
+ * belongs to. Everything below is the appearance of that arrangement: the hairlines between
+ * groups, the one filled action, the overflow and Actions menus.
+ *
+ * The marks sit on the wrapper because a SmartClient button is a table and a styleName lands on
+ * every cell of it - the label, the spacers and the icon slot alike. The wrapper is the only
+ * element that is exactly one button, which is what makes "one primary action" both true and
+ * checkable.
+ */
+
+.etskin-on .etskin-tb-divider {
+  background-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 2px,
+    var(--sk-border) 2px,
+    var(--sk-border) 18px,
+    transparent 18px
+  );
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 1px 100%;
+}
+
+/*
+ * Save is the only filled control on the screen. Everything else on the strip is a glyph on the
+ * surface, which is what lets one solid circle carry the meaning "this is the thing you came to
+ * do" without a single word of instruction.
+ */
+.etskin-on .etskin-tb-primary {
+  --sk-icon-color: var(--sk-on-primary);
+  background-color: var(--sk-primary);
+  border-radius: 999px;
+  box-shadow: var(--sk-shadow-sm);
+  transition: background-color 120ms ease;
+}
+
+.etskin-on .etskin-tb-primary:hover {
+  background-color: var(--sk-primary-hover);
+}
+
+/*
+ * A disabled primary must stop being primary, or an unsaved-nothing form shows a confident blue
+ * button that does not respond. SmartClient puts the disabled state on the cells rather than on
+ * the wrapper, so the wrapper has to ask its own contents.
+ */
+.etskin-on .etskin-tb-primary:has([class*="Disabled"]) {
+  --sk-icon-color: var(--sk-text);
+  background-color: transparent;
+  box-shadow: none;
+}
+
+/* The overflow trigger. Three dots is the one glyph everybody already reads as "and the rest". */
+/*
+ * "Save View" is an icon button that never got an icon: the framework styles it as a menu button
+ * and leaves the words in place, which a 32px slot clips to "S...". The word is folded away and a
+ * bookmark drawn in its place, so the three view controls read as one set. The title survives as
+ * the tooltip, set alongside the class in etendo-skin-toolbar.js.
+ */
+.etskin-on .etskin-tb-saveview,
+.etskin-on .etskin-tb-saveview td,
+.etskin-on .etskin-tb-saveview div {
+  font-size: 0;
+}
+
+.etskin-on .etskin-tb-saveview::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  pointer-events: none;
+  background-color: var(--sk-text-muted);
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6.5 3.5h11v17l-5.5-3.4-5.5 3.4z'/%3E%3C/svg%3E");
+  -webkit-mask-image: var(--sk-icon);
+  mask-image: var(--sk-icon);
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: 18px 18px;
+  mask-size: 18px 18px;
+}
+
+/* The menuButton style paints a raised box the other two view controls do not have. */
+.etskin-on .etskin-tb-saveview table,
+.etskin-on .etskin-tb-saveview td {
+  background: transparent;
+  background-image: none;
+  border: 0;
+}
+
+.etskin-on .etskin-tb-saveview:hover::before {
+  background-color: var(--sk-primary);
+}
+
+.etskin-on .OBToolbarIconButton_icon_etskinMore {
+  background-image: none;
+  background-color: var(--sk-icon-color);
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: 19px 19px;
+  mask-size: 19px 19px;
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23000'%3E%3Ccircle cx='5' cy='12' r='1.8'/%3E%3Ccircle cx='12' cy='12' r='1.8'/%3E%3Ccircle cx='19' cy='12' r='1.8'/%3E%3C/svg%3E");
+  -webkit-mask-image: var(--sk-icon);
+  mask-image: var(--sk-icon);
+}
+
+/*
+ * Actions keeps its word. The processes behind it - Complete, Post, Create Lines From Order - are
+ * the reason most people open the window at all, and an unlabelled glyph would have buried them
+ * as thoroughly as the off-screen buttons it replaces.
+ */
+.etskin-on .etskin-tb-actions {
+  border: 1px solid var(--sk-border-strong);
+  border-radius: 999px;
+  background-color: var(--sk-surface);
+  transition: background-color 120ms ease, border-color 120ms ease;
+}
+
+.etskin-on .etskin-tb-actions:hover {
+  border-color: var(--sk-primary);
+  background-color: var(--sk-primary-softer);
+}
+
+.etskin-on .etskin-tb-actions [class^="OBToolbarIconButton"] {
+  font-family: var(--sk-font);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--sk-text);
+  padding-inline-end: 16px;
+}
+
+/* The chevron, drawn on the wrapper so it does not disturb the label cell's centring. */
+.etskin-on .etskin-tb-actions::after {
+  content: "";
+  position: absolute;
+  inset-inline-end: 12px;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  margin-top: -5px;
+  border-inline-end: 1.5px solid var(--sk-text-muted);
+  border-block-end: 1.5px solid var(--sk-text-muted);
+  transform: rotate(45deg);
+  pointer-events: none;
+}
+
+/* ---------------------------------------------------------- toolbar menus */
+
+.etskin-on .etskin-menu,
+.etskin-on [class^="etskin-menu"] {
+  background-color: var(--sk-surface);
+  border: 1px solid var(--sk-border);
+  border-radius: var(--sk-radius);
+  box-shadow: var(--sk-shadow-md);
+  padding: 4px;
+}
+
+.etskin-on .etskin-menuTable,
+.etskin-on [class^="etskin-menu"] table {
+  border-collapse: separate;
+}
+
+.etskin-on [class^="etskin-menu"] td {
+  font-family: var(--sk-font);
+  font-size: 13px;
+  color: var(--sk-text);
+  background-color: transparent;
+  border: 0 none;
+  padding: 0 10px;
+}
+
+.etskin-on [class^="etskin-menu"] tr:hover td {
+  background-color: var(--sk-primary-soft);
+}
+
 /* ----------------------------------------------------------- accessibility */
 
 @media (prefers-reduced-motion: reduce) {
