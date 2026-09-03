@@ -261,6 +261,70 @@
   }
 
   /*
+   * Turns a member the tray dressed as a wide one into a round icon chip, and says whether it is
+   * currently on.
+   *
+   * dressMember cannot decide this for itself. It has no way to tell a module's text button whose
+   * word is the control from one whose glyph the stylesheet knows, so it leaves an unknown member
+   * its width rather than cut a label in half. A script that does know the button says so here -
+   * etendo-skin-copilot.js does, for Copilot's, because it is only ever loaded when Copilot is
+   * installed - and the button joins the row as one of the chips instead of sitting in it as a
+   * word. The title becomes the tooltip, the way the bell's count does, since what replaces it is
+   * a mask in the stylesheet keyed on the role.
+   *
+   * Repeating the call is how the on state is set, so it is written with remark rather than
+   * keepMarked once the wrapper has been marked: wrapping setStyleName twice would double every
+   * call it makes.
+   */
+  function chip(wrapper, role, active) {
+    var inner = wrapper && wrapper.getMembers ? wrapper.getMembers()[0] : null;
+    var marker;
+
+    if (!inner) {
+      return false;
+    }
+    marker = MARKER + 'item ' + MARKER + role + (active ? ' ' + MARKER + role + '-on' : '');
+    if (wrapper.etskinMarker) {
+      remark(wrapper, marker);
+    } else {
+      keepMarked(wrapper, marker);
+    }
+    if (inner.title && inner.setPrompt) {
+      inner.setPrompt(String(inner.title));
+    }
+    if (inner.setTitle) {
+      inner.setTitle('');
+    }
+    resize(wrapper, BUTTON, BUTTON);
+    resize(inner, BUTTON, BUTTON);
+    wrapper.setOverflow('hidden');
+    if (OB.NavBar.reflow) {
+      OB.NavBar.reflow();
+    }
+    return true;
+  }
+
+  /*
+   * Puts a member at the head of the row. Identity and the way out of the application are the two
+   * chips that belong hard against the right edge, where every application this one sits beside
+   * keeps them, and a module that adds a chip lands after them because it was added last.
+   */
+  function moveFirst(wrapper) {
+    var members = OB.NavBar.getMembers() || [];
+    var i;
+
+    for (i = 0; i < members.length; i++) {
+      if (members[i] === wrapper) {
+        if (i > 0 && OB.NavBar.reorderMember) {
+          OB.NavBar.reorderMember(i, 0);
+        }
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /*
    * Run after the members have drawn rather than as they are dressed, because a component's width
    * is whatever it measured itself at and it has not measured anything yet at the moment it joins
    * the bar.
@@ -414,7 +478,7 @@
     reorder();
     OB.TopLayout.reflow();
 
-    OB.ETSkin.topBar = { tray: OB.NavBar };
+    OB.ETSkin.topBar = { tray: OB.NavBar, chip: chip, first: moveFirst };
   }
 
   // ------------------------------------------------------------------ main

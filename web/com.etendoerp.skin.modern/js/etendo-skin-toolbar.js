@@ -418,6 +418,16 @@
       if (source[i].buttonType) {
         byType[source[i].buttonType] = source[i];
       }
+      /*
+       * Stock hands each button its view while it lays out the members it is about to draw, so a
+       * button that ends in the overflow menu instead - which is where a button from a module we
+       * know nothing about goes when the strip is full - would be pressed without one, and an
+       * action written against this.view would fail. They all belong to this toolbar's view either
+       * way, so it is set here, before the arrangement decides where any of them goes.
+       */
+      if (!source[i].view) {
+        source[i].view = toolbar.view;
+      }
     }
 
     function claim(type) {
