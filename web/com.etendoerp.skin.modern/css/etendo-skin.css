@@ -3651,6 +3651,347 @@
   }
 }
 
+/* --------------------------------------------------------- sales order board */
+
+/*
+ * A board is a row of columns that scrolls sideways while each column scrolls on its own, and the
+ * page itself never scrolls: the header and the staged-moves bar have to stay where they are, and
+ * a column header has to stay above its own cards while they move.
+ *
+ * As with the point of sale, the canvas is positioned absolutely by SmartClient, so the markup
+ * fills it with inset rather than a height in percent.
+ */
+.etskin-on .etskin-kb {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--sk-font);
+  color: var(--sk-text);
+  background-color: var(--sk-canvas-tint);
+  -webkit-font-smoothing: antialiased;
+}
+
+.etskin-on .etskin-kb *,
+.etskin-on .etskin-kb *::before,
+.etskin-on .etskin-kb *::after {
+  box-sizing: border-box;
+}
+
+.etskin-on .etskin-kb button {
+  font-family: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.etskin-on .etskin-kb button:focus-visible {
+  outline: 2px solid var(--sk-focus-ring);
+  outline-offset: 1px;
+}
+
+/* While a card is in the air, nothing on the board is selectable text and every column shows the
+   grabbing cursor: a drag that highlights a paragraph on the way past looks broken. */
+.etskin-on .etskin-kb-dragging {
+  user-select: none;
+  cursor: grabbing;
+}
+
+/* ---- head */
+
+.etskin-on .etskin-kb-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 0 0 auto;
+  padding: 14px 20px;
+  background-color: var(--sk-surface);
+  border-block-end: 1px solid var(--sk-border-hairline);
+}
+
+.etskin-on .etskin-kb-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.etskin-on .etskin-kb-sub {
+  font-size: 12px;
+  color: var(--sk-text-muted);
+}
+
+.etskin-on .etskin-kb-acts {
+  display: flex;
+  gap: 6px;
+  margin-inline-start: auto;
+}
+
+.etskin-on .etskin-kb-act {
+  height: 28px;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 500;
+  background-color: var(--sk-surface);
+  border: 1px solid var(--sk-border-strong);
+  border-radius: var(--sk-radius-sm);
+}
+
+.etskin-on .etskin-kb-act:hover {
+  background-color: var(--sk-neutral-soft);
+}
+
+/* ---- staged moves */
+
+/*
+ * The bar is always there, not raised on the first drop, because its job is to be read before
+ * anyone drags anything. Quiet while there is nothing staged; in the warning colour, which is the
+ * token for "this is not what it looks like", as soon as there is.
+ */
+.etskin-on .etskin-kb-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 0 0 auto;
+  padding: 8px 20px;
+  font-size: 12px;
+  color: var(--sk-text-muted);
+  background-color: var(--sk-band);
+  border-block-end: 1px solid var(--sk-border-hairline);
+}
+
+.etskin-on .etskin-kb-bar-live {
+  color: var(--sk-text);
+  background-color: color-mix(in srgb, var(--sk-warning) 12%, var(--sk-surface));
+  border-block-end-color: color-mix(in srgb, var(--sk-warning) 40%, var(--sk-border));
+}
+
+.etskin-on .etskin-kb-bar-text {
+  font-weight: 500;
+}
+
+.etskin-on .etskin-kb-bar-notice {
+  color: var(--sk-text-faint);
+}
+
+.etskin-on .etskin-kb-bar .etskin-kb-act {
+  margin-inline-start: auto;
+}
+
+/* ---- columns */
+
+.etskin-on .etskin-kb-body {
+  display: flex;
+  gap: 14px;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 16px 20px 20px;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+/* A column neither grows nor shrinks: columns of different widths would make a board that has to
+   be read twice, and a shrinking one turns into a strip as soon as there are five of them. */
+.etskin-on .etskin-kb-col {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 264px;
+  min-height: 0;
+  background-color: var(--sk-surface);
+  border: 1px solid var(--sk-border);
+  border-block-start: 3px solid var(--kb-accent, var(--sk-border-strong));
+  border-radius: var(--sk-radius);
+  box-shadow: var(--sk-shadow-sm);
+}
+
+/* One custom property per status, read by the column's top border. The colours are the same four
+   the rest of the skin uses for a state: neutral for a draft, primary for the booked ones, muted
+   for closed, danger for voided. */
+.etskin-on .etskin-kb-col[data-accent='draft'] { --kb-accent: var(--sk-border-strong); }
+.etskin-on .etskin-kb-col[data-accent='booked'] { --kb-accent: var(--sk-primary); }
+.etskin-on .etskin-kb-col[data-accent='closed'] { --kb-accent: var(--sk-success); }
+.etskin-on .etskin-kb-col[data-accent='voided'] { --kb-accent: var(--sk-danger); }
+.etskin-on .etskin-kb-col[data-accent='other'] { --kb-accent: var(--sk-warning); }
+
+/* The column under the pointer says so with its own fill and edge rather than with a moving
+   placeholder among the cards: the cards below stay where the eye left them, and the answer to
+   "where would this land" is the whole column, which is all a status board can promise. */
+.etskin-on .etskin-kb-col-over {
+  border-color: var(--sk-primary);
+  background-color: var(--sk-primary-soft);
+  box-shadow: var(--sk-shadow-md);
+}
+
+.etskin-on .etskin-kb-col-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  padding: 10px 12px;
+  border-block-end: 1px solid var(--sk-border-hairline);
+}
+
+.etskin-on .etskin-kb-col-name {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--sk-text);
+}
+
+.etskin-on .etskin-kb-col-count {
+  margin-inline-start: auto;
+  padding: 1px 7px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--sk-text-muted);
+  background-color: var(--sk-neutral-soft);
+  border-radius: 999px;
+}
+
+.etskin-on .etskin-kb-col-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 10px;
+  overflow-y: auto;
+}
+
+.etskin-on .etskin-kb-col-empty {
+  margin: 6px 2px;
+  font-size: 12px;
+  color: var(--sk-text-faint);
+}
+
+.etskin-on .etskin-kb-more {
+  flex: 0 0 auto;
+  height: 28px;
+  font-size: 12px;
+  color: var(--sk-primary);
+  background-color: transparent;
+  border: 1px dashed var(--sk-border-strong);
+  border-radius: var(--sk-radius-sm);
+}
+
+.etskin-on .etskin-kb-more:hover {
+  background-color: var(--sk-neutral-soft);
+}
+
+/* ---- cards */
+
+.etskin-on .etskin-kb-card {
+  flex: 0 0 auto;
+  padding: 9px 10px;
+  background-color: var(--sk-surface);
+  border: 1px solid var(--sk-border);
+  border-radius: var(--sk-radius-sm);
+  cursor: grab;
+}
+
+.etskin-on .etskin-kb-card:hover {
+  border-color: var(--sk-border-strong);
+  box-shadow: var(--sk-shadow-sm);
+}
+
+/* The card left behind stays in place and stays legible - it is where the drag will be undone to
+   if the pointer is let go over nothing - but it reads as absent. */
+.etskin-on .etskin-kb-card-dragging {
+  opacity: 0.35;
+}
+
+/* A card whose move is staged carries the mark for it, so the board can be read for what has been
+   asked for and not just for where the cards are. */
+.etskin-on .etskin-kb-card-moved {
+  border-color: color-mix(in srgb, var(--sk-warning) 55%, var(--sk-border));
+  background-color: color-mix(in srgb, var(--sk-warning) 7%, var(--sk-surface));
+}
+
+.etskin-on .etskin-kb-card-top {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.etskin-on .etskin-kb-doc {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* Amounts are right aligned and tabular so a column of them can be compared down the page, and
+   the currency is stated on every card because a board of orders in three currencies has no total
+   and must not look as though it has one. */
+.etskin-on .etskin-kb-amount {
+  margin-inline-start: auto;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.etskin-on .etskin-kb-amount i {
+  font-size: 10px;
+  font-style: normal;
+  color: var(--sk-text-faint);
+}
+
+.etskin-on .etskin-kb-partner {
+  margin-block-start: 3px;
+  font-size: 12px;
+  color: var(--sk-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.etskin-on .etskin-kb-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-block-start: 5px;
+  font-size: 11px;
+  color: var(--sk-text-faint);
+}
+
+.etskin-on .etskin-kb-chip {
+  margin-inline-start: auto;
+  padding: 1px 6px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--sk-warning);
+  background-color: color-mix(in srgb, var(--sk-warning) 14%, var(--sk-surface));
+  border-radius: 999px;
+}
+
+.etskin-on .etskin-kb-move {
+  margin-block-start: 6px;
+  padding-block-start: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--sk-warning);
+  border-block-start: 1px dashed color-mix(in srgb, var(--sk-warning) 45%, var(--sk-border));
+}
+
+/* The card in the air. Fixed to the viewport because it is positioned from clientX and clientY,
+   and transparent to the pointer because elementFromPoint has to see the column underneath it and
+   not this. */
+.etskin-on .etskin-kb-ghost {
+  position: fixed;
+  z-index: 2000000;
+  pointer-events: none;
+  opacity: 0.95;
+  cursor: grabbing;
+  box-shadow: var(--sk-shadow-md);
+  transform: rotate(1.5deg);
+}
+
+/* A narrow window gets narrower columns rather than fewer: the board is meant to be read across,
+   and dropping a status off the end would hide orders. */
+@media (max-width: 1120px) {
+  .etskin-on .etskin-kb-col {
+    flex-basis: 224px;
+  }
+}
+
 /* ----------------------------------------------------------- accessibility */
 
 @media (prefers-reduced-motion: reduce) {
