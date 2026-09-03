@@ -13,6 +13,7 @@ The palette is chosen by configuration, not by editing CSS.
 | `src/com/etendoerp/skin/modern/SkinComponentProvider.java` | Registers the stylesheet and the script with the kernel resource pipeline. |
 | `web/com.etendoerp.skin.modern/css/etendo-skin.css` | The whole application skin, authored against CSS custom properties. |
 | `web/com.etendoerp.skin.modern/js/etendo-skin.js` | Resolves the palette per session and writes the custom properties onto `<html>`. Also overrides the SmartClient sizes that live in JS rather than CSS. |
+| `web/com.etendoerp.skin.modern/js/etendo-skin-nav.js` | Builds the left navigation panel out of `OB.Application.menu`. Loaded after the script above and stands down unless it ran. |
 | `web/com.etendoerp.skin.modern/css/etendo-skin-login.css` | The login page, loaded by a `<link>` in `Login.html`. |
 | `web/com.etendoerp.skin.modern/fonts/` | Inter, self hosted. Two woff2 subsets, declared by both stylesheets. |
 
@@ -32,7 +33,7 @@ the kernel populates from the preferences applicable to the current session — 
 
 ## Configuration
 
-Two preferences, both set at system level by the module and overridable per client, organization,
+Three preferences, all set at system level by the module and overridable per client, organization,
 role or user through *General Setup → Application → Preference*.
 
 ### `ETSKIN_Enabled`
@@ -81,6 +82,20 @@ kept for the focus marker.
 
 The `etendo` preset restates the stock Classic colours as tokens instead. It is the low-risk
 rollout step — modern geometry, typography and icons, familiar colours.
+
+### `ETSKIN_Navigation`
+
+`sidebar` (default) or `topbar`.
+
+`sidebar` moves the application menu out of the *Application* dropdown in the navigation bar and
+into a permanent panel down the left, the way Etendo's React skin presents it, and hides the
+dropdown so the menu is not in two places. `topbar` leaves the stock navigation entirely alone —
+the panel is never built and the dropdown is never touched.
+
+Anything else is read as `topbar`, so a typo costs the panel rather than the application.
+
+See [The navigation panel](#the-navigation-panel) for what it does and what it deliberately does
+not do.
 
 ### The login page
 
@@ -139,6 +154,79 @@ framework is counting on, so the sheet-on-a-desk look is built out of things tha
 - The two strips are marked differently, following the reference: the selected *window* tab is a
   white sheet with the accent along its bottom edge, while the selected *child* tab is marked only
   by being the lightest of three fills over the band. Neither uses a colour change on the label.
+
+### The navigation panel
+
+Everything the panel needs is already in the browser. `OB.Application.menu` is the complete menu
+tree for the session, emitted by core's `application-menu.js.ftl`, and
+`OBApplicationMenuTree#itemClick` is already the code that turns one of its nodes into an open
+view. Windows, classic windows, process definitions, reports, forms, external links and recents
+each open differently, and that function is where core encodes the differences — so the script
+renders the tree and delegates every click to one hidden instance of that class rather than
+restating any of it. Nothing here is a server round trip, and nothing here is a copy of core logic
+that would drift.
+
+- **One canvas of HTML, not a widget tree.** SmartClient positions every canvas absolutely from
+  measurements it takes itself, so this menu's 277 nodes would be 277 widgets to lay out and to
+  argue with about styling. One `isc.Canvas` of markup costs a single layout pass, is scrolled by
+  the browser, and can actually look like the reference. It is also the only part of this module
+  whose class names are ours, so it needs no attribute matching and no specificity games.
+- **`redrawOnResize: false` is load-bearing.** The open folders, the scroll position and the search
+  text live in the DOM. SmartClient redraws a canvas on every resize by default, which would
+  rebuild the markup from `contents` and lose all three.
+- **The tab set is re-sized on the way in.** It was built for a `VLayout`, where `width: '100%'`
+  meant "as wide as the parent". Inside the new `HLayout` width is the length axis, so `'100%'`
+  would push it off the right edge by exactly the width of the panel; SmartClient's `'*'` — take
+  what is left — is the intent. Height becomes the breadth axis and does stretch, so it goes to
+  `'100%'`.
+- **Clicks are handled on `document`, in the capture phase.** SmartClient stops a good deal of what
+  happens inside its own canvases, and a listener bound to the canvas handle would not survive a
+  redraw. The search input additionally stops `mousedown`, which is what stops SmartClient's event
+  handler taking focus off it mid-keystroke.
+- **Hiding the stock dropdown is the last thing `install` does.** If any earlier step throws, the
+  panel is missing but the *Application* menu is still in the navigation bar, so the user still has
+  a menu.
+- **The panel ships no strings of its own.** A new `AD_MESSAGE` would mean the module has to be
+  reinstalled before the text appeared, and an English literal in a Spanish installation is worse
+  than an unlabelled icon. So the search box has an icon and no placeholder — core has no "Search"
+  label — and the recents heading reuses `OBKMO_RecentViews`.
+
+Filtering is two classes: one on the root, which opens every subtree so a match four levels down is
+visible without expanding anything, and one on each group that contains no match, which takes it
+out of the flow. Clearing the box drops both and the panel is back to whatever the user had open —
+the expanded state is never thrown away.
+
+Collapsed, the panel becomes a 52px rail of the *top level only*. Railing every level would be four
+depths of identical glyphs with no titles, which is why the first version of this hid the tree
+outright; railing one level is a different thing, because the nine or so sections of an Etendo menu
+are few enough to be recognised and the tile for the section containing the open view is marked, so
+the rail still answers "where am I". Clicking a tile expands the panel, opens that section and
+scrolls it into view; the search box expands the panel and takes focus. The choice is remembered in
+`localStorage`, per browser, wrapped in try/catch because a private window throws.
+
+A tile shows a two-letter monogram taken from the section title — first letters of the first two
+significant words, stopwords in English and Spanish skipped, a single-word title contributing its
+first two letters. Monograms rather than shipped artwork, because **a folder node in
+`OB.Application.menu` carries no id**: its keys are exactly `title`, `singleRecord`, `readOnly`,
+`editOrDeleteOnly`, `type` and `submenu`. There is nothing stable to key an icon table on except the
+translated title, and the menu is data — a client can rename a section or add one. A monogram is
+derived from whatever the title happens to be, so it is always present, correct in every language
+and works for third-party sections. Collisions are possible (*Procurement Management* and
+*Production Management* both give `PM`); each tile carries the full title as its tooltip.
+
+Real artwork drops in without a rework. If `OB.ETSkin.navIcons` exists, the renderer reads
+`navIcons[title]` for each top-level node and emits that as an `<img>` in place of the monogram, in
+the rail and in the expanded row alike. Populating it needs no core change: this module's own
+`ComponentProvider` can register a generated `.js.ftl` resource that reads `AD_MENU` (joined to
+`AD_MENU_TRL` for the session's language, which is the same text the menu itself was built from) and
+emits `OB.ETSkin.navIcons = {"<title>": "data:image/png;base64,…"}`. Top-level titles are unique
+within a menu, so the title is a sound key on the server side too.
+
+Two things it deliberately does not do in this version. It does not scroll the current view into
+sight or expand the folders above it on every tab switch: the folder containing the open view is
+tinted instead, which points at it without fighting a user who just collapsed that folder. And it
+matches the open tab to a menu row by title, because a title is all a tab and a menu node reliably
+share.
 
 ### The boot screen
 
