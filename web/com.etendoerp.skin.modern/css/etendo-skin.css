@@ -2991,23 +2991,6 @@
   }
 }
 
-/*
- * The embedded applications the skin adds are opened from the dashboard header, and they are not
- * peers of Refresh: one opens a screen, the others operate the one that is already there.
- */
-.etskin-on .etskin-dash-act-app {
-  background-color: var(--sk-primary);
-  border-color: var(--sk-primary);
-  color: var(--sk-on-primary);
-  margin-inline-end: 4px;
-}
-
-.etskin-on .etskin-dash-act-app:hover {
-  background-color: var(--sk-primary-hover);
-  border-color: var(--sk-primary-hover);
-  color: var(--sk-on-primary);
-}
-
 /* ------------------------------------------------------------ status badge */
 
 /*
