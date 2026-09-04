@@ -42,7 +42,13 @@
 (function () {
   'use strict';
 
-  var VIEW = 'ETSkinPOS';
+  /*
+   * The name is the view's identity everywhere: isc class, OBUIAPP_View_Impl.name, and the viewId
+   * a menu entry resolves to. It carries the module's DB prefix because OBUIAPP_View_Impl's
+   * trigger rejects any name that does not start with "<prefix>_", and without an AD row the till
+   * cannot be reached from the menu at all -- only from the dashboard button.
+   */
+  var VIEW = 'ETSKIN_POS';
 
   /*
    * Prices below include tax, the way a price on a shelf does, so the tax figure on the ticket is

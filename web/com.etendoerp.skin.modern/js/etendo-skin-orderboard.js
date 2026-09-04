@@ -44,7 +44,8 @@
 (function () {
   'use strict';
 
-  var VIEW = 'ETSkinOrderBoard';
+  // Prefixed for the same reason as the till's view: see etendo-skin-pos.js.
+  var VIEW = 'ETSKIN_OrderBoard';
 
   // The Sales Order window. Used only to open a card in the window it belongs to, and only if the
   // role's own menu carries it - the board never invents access to a window the user has not got.

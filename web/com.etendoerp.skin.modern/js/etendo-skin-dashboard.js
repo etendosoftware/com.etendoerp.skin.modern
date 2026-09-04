@@ -409,33 +409,6 @@
     return '<span class="etskin-dash-skel"></span>';
   }
 
-  /*
-   * The embedded applications the skin adds - the till so far - are reached from here, because the
-   * home screen is the one place every session starts. The button is emitted only if the script
-   * that answers for it is in the bundle, so a partial install shows no dead control.
-   */
-  /*
-   * The screens this skin adds that are not windows - the till and the order board - have no menu
-   * entry to be reached from, so the dashboard header is their entry point. Each button is emitted
-   * only if its view actually loaded, because a button for a screen that is not there is worse
-   * than no button.
-   */
-  function appHtml() {
-    var html = '';
-    if (!OB.ETSkin) {
-      return '';
-    }
-    if (OB.ETSkin.openPOS) {
-      html += '<button type="button" class="etskin-dash-act etskin-dash-act-app" data-act="pos">' +
-        esc(skinLabel('posTitle', 'Point of Sale')) + '</button>';
-    }
-    if (OB.ETSkin.openOrderBoard) {
-      html += '<button type="button" class="etskin-dash-act etskin-dash-act-app" ' +
-        'data-act="board">' + esc(skinLabel('boardTitle', 'Sales Order Board')) + '</button>';
-    }
-    return html;
-  }
-
   function headHtml() {
     var name = OB.User.firstName || OB.User.name || '';
     var meta = [OB.User.clientName, OB.User.organizationName,
@@ -454,8 +427,12 @@
       '</h1>' +
       '<div class="etskin-dash-meta">' + parts.join(' &middot; ') + '</div>' +
       '</div>' +
+      /*
+       * The till and the order board used to open from here, because they had no menu entry to be
+       * reached from. They have one now - OKR, POS and Kanban all hang off the menu - so the
+       * header is back to acting on the dashboard itself.
+       */
       '<div class="etskin-dash-acts">' +
-      appHtml() +
       '<button type="button" class="etskin-dash-act" data-act="refresh">' +
       esc(label('OBKMO_WMO_Refresh', 'Refresh')) + '</button>' +
       '<button type="button" class="etskin-dash-act" data-act="add">' +
@@ -799,16 +776,6 @@
         return;
       case 'manage':
         toggleSide();
-        return;
-      case 'pos':
-        if (OB.ETSkin && OB.ETSkin.openPOS) {
-          OB.ETSkin.openPOS();
-        }
-        return;
-      case 'board':
-        if (OB.ETSkin && OB.ETSkin.openOrderBoard) {
-          OB.ETSkin.openOrderBoard();
-        }
         return;
       case 'open':
         openWindow(action);
