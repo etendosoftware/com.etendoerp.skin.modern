@@ -766,6 +766,7 @@
   font-size: 12px;
   font-weight: 500;
   color: var(--sk-text-muted);
+  padding-bottom: 3px;
 }
 
 /*
@@ -783,7 +784,9 @@
 .etskin-on .etskin-required {
   color: var(--sk-danger);
   font-weight: 600;
-  margin-inline-start: 1px;
+  font-size: 0.8em;
+  vertical-align: super;
+  margin-inline-start: 2px;
 }
 
 /*
@@ -838,10 +841,11 @@
   background-color: var(--sk-field-fill);
   border: 0;
   border-bottom: 1px solid var(--sk-border-strong);
-  border-radius: var(--sk-radius-sm) var(--sk-radius-sm) 0 0;
+  border-radius: var(--sk-radius) var(--sk-radius) 0 0;
+  box-shadow: var(--sk-shadow-sm);
   box-sizing: border-box;
   min-height: var(--sk-field-height);
-  padding: 4px 10px;
+  padding: 6px 10px;
   transition: background-color 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
 }
 
@@ -944,6 +948,7 @@
   position: relative;
   background-color: var(--sk-band);
   border-radius: var(--sk-radius-sm);
+  box-shadow: var(--sk-shadow-sm);
 }
 
 .etskin-on div[eventproxy*="OBSectionItemButton"] td[class^="OBSectionItemButton_Title"],
@@ -956,6 +961,7 @@
   font-size: 13px;
   font-weight: 600;
   color: var(--sk-text);
+  padding-block: 10px;
   padding-inline-start: 12px;
 }
 
@@ -966,7 +972,8 @@
 
 /*
  * Two borders on an empty 8px box: rotated 45 degrees it points down, at -45 it points right. No
- * character, no font, no image - so it inherits the band's colour and costs no request.
+ * character, no font, no image - so it inherits the band's colour and costs no request. The
+ * transition is what a chevron needs to read as a toggle rather than a jump cut between two glyphs.
  */
 .etskin-on .etskin-section-chevron {
   position: absolute;
@@ -977,7 +984,9 @@
   height: 7px;
   border-right: 1.5px solid var(--sk-text-muted);
   border-bottom: 1.5px solid var(--sk-text-muted);
+  border-radius: 0 1px 0 0;
   transform: rotate(45deg);
+  transition: transform 150ms ease;
 }
 
 .etskin-on td[class^="OBSectionItemButton_Title"][class$="closed"] .etskin-section-chevron {
