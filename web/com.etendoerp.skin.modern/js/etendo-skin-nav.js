@@ -46,6 +46,7 @@
   // The index path of the node whose window is open, kept because the row it names is not always
   // the row that carries the mark; see applyCurrent.
   var currentPath = null;
+  var syncTimer = null; // debounce handle for the tab-bar observer, see watchTabBar
 
   // ------------------------------------------------------------------ gates
 
@@ -567,6 +568,54 @@
    * their day on. The title is still the fallback, for a tab that is not a window: the workspace,
    * and whatever a process definition opens.
    */
+  /*
+   * tabSet.tabSelected covers exactly one of the ways the active window tab changes, and this
+   * skin's own users have found the other two: closing the active tab hands the highlight to
+   * whichever tab SmartClient promotes next without calling tabSelected at all, and a tab opened
+   * from a drill-down or a recent chip can become selected through a code path this file never
+   * had a hook for. Patching each one by name means finding every such path first.
+   *
+   * The tab bar itself does not have that problem: whichever way the active tab changed, core
+   * still has to mark it - the "Selected" class the stylesheet already keys off of is right there
+   * in the DOM, on the same OBTabBarButtonMainTop element every time. Watching that class instead
+   * of the API that moves it covers every path through one observer, including ones core adds
+   * later.
+   */
+  function watchTabBar() {
+    var bar = document.querySelector('.OBTabBarMain');
+    if (!bar || typeof MutationObserver === 'undefined') {
+      return;
+    }
+    var scheduleSync = function () {
+      if (syncTimer) {
+        clearTimeout(syncTimer);
+      }
+      syncTimer = setTimeout(function () {
+        syncTimer = null;
+        syncCurrent();
+        // The pane's windowId is not always set yet on the tick the tab becomes current - a
+        // freshly opened window fills it in once its view has loaded. One more pass shortly after
+        // catches that without polling for it.
+        setTimeout(syncCurrent, 400);
+      }, 60);
+    };
+    var observer = new MutationObserver(function (mutations) {
+      var i;
+      for (i = 0; i < mutations.length; i++) {
+        if (mutations[i].attributeName === 'class') {
+          scheduleSync();
+          return;
+        }
+      }
+    });
+    observer.observe(bar, {
+      attributes: true,
+      attributeFilter: ['class'],
+      subtree: true,
+      childList: true
+    });
+  }
+
   function syncCurrent() {
     var root = panel();
     if (!root || !OB.MainView || !OB.MainView.TabSet) {
@@ -844,6 +893,8 @@
     document.addEventListener('input', onInput, true);
     document.addEventListener('mousedown', onMouseDown, true);
 
+    // Kept alongside watchTabBar as a second, redundant trigger: cheap, and it still fires first
+    // on the one path it does cover, which means one less mutation for the observer to chase.
     var previousTabSelected = tabSet.tabSelected;
     tabSet.tabSelected = function () {
       var result;
@@ -853,6 +904,7 @@
       syncCurrent();
       return result;
     };
+    watchTabBar();
 
     hideApplicationMenuButton();
     applyCollapsed(collapsed(), false);
