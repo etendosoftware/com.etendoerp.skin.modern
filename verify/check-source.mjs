@@ -159,6 +159,37 @@ group('Rules that only exist under interaction');
   check('the palette is declared as tokens', tokens.size >= 12, `${tokens.size} --sk-* custom properties`);
 }
 
+// ------------------------------------------- what the navigation panel opens
+
+group('The navigation panel opens what it names');
+{
+  /*
+   * Two defects that only show up on a click and are cheap to lock down here.
+   *
+   * The first: ob-view-manager.js lets loadedWindowClassName - written by the generated script of a
+   * window that is in development, and never cleared - override the name of the view it has just
+   * fetched, so an open that has to fetch renders the last development window instead of the view
+   * the user asked for. The panel clears it before it delegates, which is why every delegated click
+   * has to go through delegateClick and none may call the core tree directly.
+   *
+   * The second: a popup carries its own layout and cannot navigate anywhere, so the panel stands
+   * down there, recognising the three shapes the core opens popups in.
+   */
+  const nav = stripLiterals(read(join('js', 'etendo-skin-nav.js')) || '');
+  const delegated = (nav.match(/menuDelegate\.itemClick\(/g) || []).length;
+  check('every delegated click goes through delegateClick', delegated === 1 && /function delegateClick\(/.test(nav),
+    `${delegated} call(s) to menuDelegate.itemClick`);
+  check('the stale window class is cleared before delegating',
+    /loadedWindowClassName\s*=\s*null;[\s\S]{0,400}?menuDelegate\.itemClick\(/.test(nav),
+    'loadedWindowClassName = null precedes the delegated click');
+  check('the panel stands down in a popup', /function wanted\(\)[\s\S]*?isPopupDocument\(\)/.test(nav),
+    'wanted() consults isPopupDocument()');
+  const shapes = ['hideMenu=true', 'PROCESS', 'opener'];
+  const missing = shapes.filter((shape) => !(read(join('js', 'etendo-skin-nav.js')) || '').includes(shape));
+  check('all three popup shapes are recognised', missing.length === 0,
+    missing.length ? `not covered: ${missing.join(', ')}` : shapes.join(', '));
+}
+
 // ----------------------------------------------------- the one core edit
 
 group('Core stays touched in one file and nowhere else');
