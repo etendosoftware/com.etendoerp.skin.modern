@@ -65,8 +65,39 @@
     if (OB.User && OB.User.isPortal) {
       return false;
     }
+    // A popup is a window the application opened for one process, one classic form or one help
+    // page. It carries its own layout and the user cannot navigate away from it, so a navigation
+    // panel there is dead weight that steals half the width of a deliberately small window.
+    if (isPopupDocument()) {
+      return false;
+    }
     var mode = properties().ETSKIN_Navigation;
     return !mode || mode === 'sidebar';
+  }
+
+  /*
+   * Three independent marks, because the core opens popups in three shapes and no single one of
+   * them covers all three: ob-classic-window.js, ob-classic-help.js and ob-classic-popup.js append
+   * hideMenu=true to the url they load; OB.Utilities.openProcessPopup names the window it opens
+   * PROCESS; and any window.open leaves an opener behind, which a plain tab does not, since
+   * browsers give target=_blank links no opener by default. Reading top can throw when the
+   * document is framed by another origin, hence the try.
+   */
+  function isPopupDocument() {
+    try {
+      if (String(window.location.search || '').indexOf('hideMenu=true') !== -1) {
+        return true;
+      }
+      if (window.name === 'PROCESS' || (window.top && window.top.name === 'PROCESS')) {
+        return true;
+      }
+      if (window.opener) {
+        return true;
+      }
+    } catch (ignored) {
+      // Cross-origin top: nothing to read, and the shapes above already answered for our own frames.
+    }
+    return false;
   }
 
   // ------------------------------------------------------------------- html
@@ -654,12 +685,33 @@
     }
   }
 
+  /*
+   * Every open goes through the core menu tree, which is the only code that knows how to turn a
+   * menu node into a view, but it is called after clearing loadedWindowClassName on the view
+   * manager. That global is written by the generated script of a window that is in development and
+   * is never cleared again; ob-view-manager.js reads it in fetchViewCallback and lets it override
+   * the name of the view it just fetched, so the first open of any other view - the one that has
+   * to fetch, the second finds the class already defined - renders the last development window
+   * instead. Clearing it here is safe: a fetch that really is a development window sets it again
+   * from its own response.
+   */
+  function delegateClick(node) {
+    try {
+      if (OB.Layout && OB.Layout.ViewManager) {
+        OB.Layout.ViewManager.loadedWindowClassName = null;
+      }
+    } catch (ignored) {
+      // No view manager yet: nothing stale to clear.
+    }
+    menuDelegate.itemClick(node, 0);
+  }
+
   function openNode(node, row) {
     if (!node) {
       return;
     }
     markCurrent(row);
-    menuDelegate.itemClick(node, 0);
+    delegateClick(node);
     refreshRecents();
   }
 
@@ -796,7 +848,7 @@
       var recent = recentEntries()[Number(chip.getAttribute('data-r'))];
       if (recent) {
         markCurrent(null);
-        menuDelegate.itemClick({ recentObject: recent, title: recent.tabTitle }, 0);
+        delegateClick({ recentObject: recent, title: recent.tabTitle });
         refreshRecents();
       }
       return;

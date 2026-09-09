@@ -184,6 +184,21 @@ that would drift.
   happens inside its own canvases, and a listener bound to the canvas handle would not survive a
   redraw. The search input additionally stops `mousedown`, which is what stops SmartClient's event
   handler taking focus off it mid-keystroke.
+- **The stale window class is cleared before every delegated click.** A window that is in
+  development emits a generated class name of its own and records it in
+  `OB.Layout.ViewManager.loadedWindowClassName`, which core never clears again; `fetchViewCallback`
+  in `ob-view-manager.js` then lets that name override the view it has just fetched. The visible
+  effect is that the first click on any other entry - the one that has to fetch, since the second
+  finds the class already defined - opens a tab with the right title and the *last development
+  window's grid* inside it. `delegateClick` sets the global back to null on the way in, which is
+  strictly more correct: a fetch that really is a development window sets it again from its own
+  response.
+- **The panel stands down in a popup.** A popup carries its own layout, shows one process or one
+  classic form and cannot navigate anywhere, so a 260px menu there is dead weight in a deliberately
+  small window. Popups are recognised by all three shapes core opens them in: the `hideMenu=true`
+  it appends to classic window, help and popup urls; the `PROCESS` window name
+  `OB.Utilities.openProcessPopup` gives the window it opens; and the opener any `window.open` leaves
+  behind, which a plain tab does not.
 - **Hiding the stock dropdown is the last thing `install` does.** If any earlier step throws, the
   panel is missing but the *Application* menu is still in the navigation bar, so the user still has
   a menu.
