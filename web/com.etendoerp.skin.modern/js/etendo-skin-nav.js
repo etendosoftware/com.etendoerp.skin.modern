@@ -46,6 +46,7 @@
   // The index path of the node whose window is open, kept because the row it names is not always
   // the row that carries the mark; see applyCurrent.
   var currentPath = null;
+  var syncTimer = null; // debounce handle for the tab-bar observer, see watchTabBar
 
   // ------------------------------------------------------------------ gates
 
@@ -64,8 +65,39 @@
     if (OB.User && OB.User.isPortal) {
       return false;
     }
+    // A popup is a window the application opened for one process, one classic form or one help
+    // page. It carries its own layout and the user cannot navigate away from it, so a navigation
+    // panel there is dead weight that steals half the width of a deliberately small window.
+    if (isPopupDocument()) {
+      return false;
+    }
     var mode = properties().ETSKIN_Navigation;
     return !mode || mode === 'sidebar';
+  }
+
+  /*
+   * Three independent marks, because the core opens popups in three shapes and no single one of
+   * them covers all three: ob-classic-window.js, ob-classic-help.js and ob-classic-popup.js append
+   * hideMenu=true to the url they load; OB.Utilities.openProcessPopup names the window it opens
+   * PROCESS; and any window.open leaves an opener behind, which a plain tab does not, since
+   * browsers give target=_blank links no opener by default. Reading top can throw when the
+   * document is framed by another origin, hence the try.
+   */
+  function isPopupDocument() {
+    try {
+      if (String(window.location.search || '').indexOf('hideMenu=true') !== -1) {
+        return true;
+      }
+      if (window.name === 'PROCESS' || (window.top && window.top.name === 'PROCESS')) {
+        return true;
+      }
+      if (window.opener) {
+        return true;
+      }
+    } catch (ignored) {
+      // Cross-origin top: nothing to read, and the shapes above already answered for our own frames.
+    }
+    return false;
   }
 
   // ------------------------------------------------------------------- html
@@ -537,9 +569,84 @@
     applyCurrent(currentPath);
   }
 
-  // Keeps the panel in step with the tab strip, so closing a tab or switching to one opened from
-  // somewhere else does not leave the highlight behind. Matching is by title because that is all a
-  // tab and a menu node reliably share.
+  // The path of the first menu node that opens the given window, wherever in the tree it sits.
+  function pathOfWindow(list, prefix, windowId) {
+    var i, node, path, found;
+    for (i = 0; i < list.length; i++) {
+      node = list[i];
+      path = prefix === '' ? String(i) : prefix + '.' + i;
+      if (node.windowId && String(node.windowId) === windowId) {
+        return path;
+      }
+      if (node.submenu && node.submenu.length) {
+        found = pathOfWindow(node.submenu, path, windowId);
+        if (found) {
+          return found;
+        }
+      }
+    }
+    return null;
+  }
+
+  /*
+   * Keeps the panel in step with the tab strip, so closing a tab or switching to one opened from
+   * somewhere else does not leave the highlight behind.
+   *
+   * The window the tab holds is what identifies it, not the label on it. A tab is renamed the
+   * moment a record is selected in it - "Sales Invoice" becomes "Sales Invoice - 1000367 - 03-0..."
+   * complete with the ellipsis the strip needs to fit it - and matching that against menu titles
+   * found nothing, so the panel and the rail both went blank on exactly the screens a user spends
+   * their day on. The title is still the fallback, for a tab that is not a window: the workspace,
+   * and whatever a process definition opens.
+   */
+  /*
+   * tabSet.tabSelected covers exactly one of the ways the active window tab changes, and this
+   * skin's own users have found the other two: closing the active tab hands the highlight to
+   * whichever tab SmartClient promotes next without calling tabSelected at all, and a tab opened
+   * from a drill-down or a recent chip can become selected through a code path this file never
+   * had a hook for. Patching each one by name means finding every such path first.
+   *
+   * The tab bar itself does not have that problem: whichever way the active tab changed, core
+   * still has to mark it - the "Selected" class the stylesheet already keys off of is right there
+   * in the DOM, on the same OBTabBarButtonMainTop element every time. Watching that class instead
+   * of the API that moves it covers every path through one observer, including ones core adds
+   * later.
+   */
+  function watchTabBar() {
+    var bar = document.querySelector('.OBTabBarMain');
+    if (!bar || typeof MutationObserver === 'undefined') {
+      return;
+    }
+    var scheduleSync = function () {
+      if (syncTimer) {
+        clearTimeout(syncTimer);
+      }
+      syncTimer = setTimeout(function () {
+        syncTimer = null;
+        syncCurrent();
+        // The pane's windowId is not always set yet on the tick the tab becomes current - a
+        // freshly opened window fills it in once its view has loaded. One more pass shortly after
+        // catches that without polling for it.
+        setTimeout(syncCurrent, 400);
+      }, 60);
+    };
+    var observer = new MutationObserver(function (mutations) {
+      var i;
+      for (i = 0; i < mutations.length; i++) {
+        if (mutations[i].attributeName === 'class') {
+          scheduleSync();
+          return;
+        }
+      }
+    });
+    observer.observe(bar, {
+      attributes: true,
+      attributeFilter: ['class'],
+      subtree: true,
+      childList: true
+    });
+  }
+
   function syncCurrent() {
     var root = panel();
     if (!root || !OB.MainView || !OB.MainView.TabSet) {
@@ -548,11 +655,16 @@
     var tab = OB.MainView.TabSet.getSelectedTab
       ? OB.MainView.TabSet.getSelectedTab()
       : null;
-    var title = tab && (tab.title || tab.tabTitle);
+    var pane = tab && tab.pane;
+    var windowId = pane && pane.windowId ? String(pane.windowId) : null;
+    var title = (pane && pane.tabTitle) || (tab && (tab.title || tab.tabTitle));
     var rows = root.querySelectorAll('.etskin-nav-row');
     var i, labelEl;
     currentPath = null;
-    for (i = 0; title && i < rows.length; i++) {
+    if (windowId && menuData) {
+      currentPath = pathOfWindow(menuData, '', windowId);
+    }
+    for (i = 0; !currentPath && title && i < rows.length; i++) {
       labelEl = rows[i].querySelector('.etskin-nav-label');
       if (labelEl && labelEl.textContent === title) {
         currentPath = rows[i].getAttribute('data-p');
@@ -573,12 +685,33 @@
     }
   }
 
+  /*
+   * Every open goes through the core menu tree, which is the only code that knows how to turn a
+   * menu node into a view, but it is called after clearing loadedWindowClassName on the view
+   * manager. That global is written by the generated script of a window that is in development and
+   * is never cleared again; ob-view-manager.js reads it in fetchViewCallback and lets it override
+   * the name of the view it just fetched, so the first open of any other view - the one that has
+   * to fetch, the second finds the class already defined - renders the last development window
+   * instead. Clearing it here is safe: a fetch that really is a development window sets it again
+   * from its own response.
+   */
+  function delegateClick(node) {
+    try {
+      if (OB.Layout && OB.Layout.ViewManager) {
+        OB.Layout.ViewManager.loadedWindowClassName = null;
+      }
+    } catch (ignored) {
+      // No view manager yet: nothing stale to clear.
+    }
+    menuDelegate.itemClick(node, 0);
+  }
+
   function openNode(node, row) {
     if (!node) {
       return;
     }
     markCurrent(row);
-    menuDelegate.itemClick(node, 0);
+    delegateClick(node);
     refreshRecents();
   }
 
@@ -715,7 +848,7 @@
       var recent = recentEntries()[Number(chip.getAttribute('data-r'))];
       if (recent) {
         markCurrent(null);
-        menuDelegate.itemClick({ recentObject: recent, title: recent.tabTitle }, 0);
+        delegateClick({ recentObject: recent, title: recent.tabTitle });
         refreshRecents();
       }
       return;
@@ -812,6 +945,8 @@
     document.addEventListener('input', onInput, true);
     document.addEventListener('mousedown', onMouseDown, true);
 
+    // Kept alongside watchTabBar as a second, redundant trigger: cheap, and it still fires first
+    // on the one path it does cover, which means one less mutation for the observer to chase.
     var previousTabSelected = tabSet.tabSelected;
     tabSet.tabSelected = function () {
       var result;
@@ -821,6 +956,7 @@
       syncCurrent();
       return result;
     };
+    watchTabBar();
 
     hideApplicationMenuButton();
     applyCollapsed(collapsed(), false);

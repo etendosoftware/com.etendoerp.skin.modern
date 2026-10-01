@@ -278,6 +278,43 @@
     }
   }
 
+  // -------------------------------------------------------------- badges
+
+  var STATUS_FIELD = 'documentStatus';
+
+  /*
+   * A document status cell is drawn as a badge. Only that one property, and only where the grid is
+   * drawing an ordinary row: a group header cell holds the group's own title and count, a summary
+   * row holds an aggregate, and the row being edited holds an editor - none of them are a status
+   * to colour, and all three come through here.
+   *
+   * The label comes out of the field's value map rather than out of the superclass call, which
+   * would return a rendered cell. That keeps the badge to plain text it can escape itself, and it
+   * keeps this from depending on what the superclass decides a cell looks like.
+   */
+  function badgeCell(grid, record, recordNum, field) {
+    var raw, label;
+    if (!field || field.name !== STATUS_FIELD || !record) {
+      return null;
+    }
+    if (!OB.ETSkin || !OB.ETSkin.statusBadge) {
+      return null;
+    }
+    if (record.groupMembers || record[grid.groupSummaryRecordProperty] ||
+        record[grid.gridSummaryRecordProperty]) {
+      return null;
+    }
+    if (recordNum === grid.getEditRow()) {
+      return null;
+    }
+    raw = record[field.name];
+    if (raw === null || raw === undefined || raw === '') {
+      return null;
+    }
+    label = field.valueMap && field.valueMap[raw] ? field.valueMap[raw] : raw;
+    return OB.ETSkin.statusBadge(raw, label);
+  }
+
   // -------------------------------------------------------------------- main
 
   try {
@@ -287,6 +324,7 @@
     var originalRowCount = proto.updateRowCountDisplay;
     var originalFunnel = proto.checkShowFilterFunnelIcon;
     var originalSingle = proto.setSingleRecordFilterMessage;
+    var originalCell = proto.getCellValue;
 
     isc.OBViewGrid.addProperties({
       /*
@@ -353,6 +391,19 @@
 
       setSingleRecordFilterMessage: function () {
         return withoutMessageBar(this, originalSingle, arguments);
+      },
+
+      getCellValue: function (record, recordNum, fieldNum) {
+        var badge = null;
+        try {
+          badge = badgeCell(this, record, recordNum, this.fields[fieldNum]);
+        } catch (e) {
+          // A cell that cannot be badged is drawn the way it always was.
+        }
+        if (badge !== null) {
+          return badge;
+        }
+        return originalCell.apply(this, arguments);
       }
     });
   } catch (e) {

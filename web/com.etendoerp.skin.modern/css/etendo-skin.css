@@ -79,10 +79,9 @@
  * the palette changes per client without recompiling anything. Keeping real values here means a
  * JS failure degrades to a sane theme instead of an unstyled page.
  *
- * They sit on :root rather than on .etskin-on because the boot screen at the bottom of this file
- * paints before any script has run and therefore before that class exists. Custom properties are
- * inert until something reads them, so declaring them unconditionally costs a disabled client
- * nothing.
+ * They sit on :root rather than on .etskin-on so the fallback holds even before the script runs.
+ * Custom properties are inert until something reads them, and every rule that reads them is scoped
+ * under .etskin-on, so declaring them unconditionally costs a disabled client nothing.
  */
 :root {
   --sk-primary: #2563eb;
@@ -766,6 +765,7 @@
   font-size: 12px;
   font-weight: 500;
   color: var(--sk-text-muted);
+  padding-bottom: 3px;
 }
 
 /*
@@ -783,7 +783,9 @@
 .etskin-on .etskin-required {
   color: var(--sk-danger);
   font-weight: 600;
-  margin-inline-start: 1px;
+  font-size: 0.8em;
+  vertical-align: super;
+  margin-inline-start: 2px;
 }
 
 /*
@@ -838,10 +840,11 @@
   background-color: var(--sk-field-fill);
   border: 0;
   border-bottom: 1px solid var(--sk-border-strong);
-  border-radius: var(--sk-radius-sm) var(--sk-radius-sm) 0 0;
+  border-radius: var(--sk-radius) var(--sk-radius) 0 0;
+  box-shadow: var(--sk-shadow-sm);
   box-sizing: border-box;
   min-height: var(--sk-field-height);
-  padding: 4px 10px;
+  padding: 6px 10px;
   transition: background-color 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
 }
 
@@ -944,6 +947,7 @@
   position: relative;
   background-color: var(--sk-band);
   border-radius: var(--sk-radius-sm);
+  box-shadow: var(--sk-shadow-sm);
 }
 
 .etskin-on div[eventproxy*="OBSectionItemButton"] td[class^="OBSectionItemButton_Title"],
@@ -956,6 +960,7 @@
   font-size: 13px;
   font-weight: 600;
   color: var(--sk-text);
+  padding-block: 10px;
   padding-inline-start: 12px;
 }
 
@@ -966,7 +971,8 @@
 
 /*
  * Two borders on an empty 8px box: rotated 45 degrees it points down, at -45 it points right. No
- * character, no font, no image - so it inherits the band's colour and costs no request.
+ * character, no font, no image - so it inherits the band's colour and costs no request. The
+ * transition is what a chevron needs to read as a toggle rather than a jump cut between two glyphs.
  */
 .etskin-on .etskin-section-chevron {
   position: absolute;
@@ -977,7 +983,9 @@
   height: 7px;
   border-right: 1.5px solid var(--sk-text-muted);
   border-bottom: 1.5px solid var(--sk-text-muted);
+  border-radius: 0 1px 0 0;
   transform: rotate(45deg);
+  transition: transform 150ms ease;
 }
 
 .etskin-on td[class^="OBSectionItemButton_Title"][class$="closed"] .etskin-section-chevron {
@@ -1176,6 +1184,7 @@
  */
 .etskin-on .etskin-tray-alert [class^="OBNavBarTextButton"],
 .etskin-on .etskin-tray-help [class^="OBNavBarTextButton"],
+.etskin-on .etskin-tray-copilot [class^="navBarButton"],
 .etskin-on .etskin-tray-logout .OBNavBarImgButton {
   font-size: 0 !important;
   line-height: 0 !important;
@@ -1189,6 +1198,7 @@
  */
 .etskin-on .etskin-tray-alert::before,
 .etskin-on .etskin-tray-help::before,
+.etskin-on .etskin-tray-copilot::before,
 .etskin-on .etskin-tray-logout::before {
   content: "";
   position: absolute;
@@ -1216,6 +1226,28 @@
 
 .etskin-on .etskin-tray-logout::before {
   --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4 M16 17l5-5-5-5 M21 12H9'/%3E%3C/svg%3E");
+}
+
+/*
+ * Copilot's own navigation bar button, which etendo-skin-copilot.js asks the tray to dress as a
+ * chip. It is a plain SmartClient button rather than one of core's, so its cells are named after
+ * the baseStyle the module gave it and the rule above needs that name to blank the word; the
+ * artwork it asks for is hidden with every other chip's, which is just as well, since it points at
+ * a fixed /etendo/ path that is only right on a deployment served from that context.
+ */
+.etskin-on .etskin-tray-copilot::before {
+  --sk-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 11.5a8.4 8.4 0 0 1-8.5 8.4 8.9 8.9 0 0 1-3.8-.8L3 21l1.9-5.3A8.2 8.2 0 0 1 4 11.5 8.4 8.4 0 0 1 12.5 3 8.4 8.4 0 0 1 21 11.5z'/%3E%3C/svg%3E");
+}
+
+/*
+ * Filled while the panel is on screen. The chip is the only thing in the tray that can say so, and
+ * saying it is what the floating window never had to: a window in front of the user announces
+ * itself, a docked panel is part of the furniture, and the control that opens it is where one
+ * looks to find out whether it is there.
+ */
+.etskin-on .etskin-tray-copilot-on {
+  background-color: var(--sk-primary);
+  --sk-icon-color: var(--sk-on-primary);
 }
 
 /*
@@ -1317,7 +1349,12 @@
  */
 .etskin-on .OBMyOBLeftColumn {
   background-color: var(--sk-surface);
-  border-inline-end: 1px solid var(--sk-border);
+  /*
+   * The column is now a drawer on the trailing edge, opened by Manage workspace and closed the
+   * rest of the time, so the rule that separated it from the portal moves to the side it is
+   * actually on.
+   */
+  border-inline-start: 1px solid var(--sk-border);
 }
 
 /*
@@ -1385,6 +1422,49 @@
   mask-size: 14px 14px;
   -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 5v14 M5 12h14'/%3E%3C/svg%3E");
   mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 5v14 M5 12h14'/%3E%3C/svg%3E");
+}
+
+/*
+ * Widget chrome. The widgets themselves are the framework's - a widget is a class registered in
+ * the application dictionary and it keeps every behaviour it has - but a widget sitting under the
+ * dashboard cards has to read as the same kind of object as one of them. Stock outlines it in 1px
+ * of the Etendo navy with a 16px navy title, which is the heaviest border on any screen, and
+ * leaves the header transparent so the desk colour shows through it.
+ */
+.etskin-on .OBWidgetHeader {
+  background-color: var(--sk-surface);
+  border-color: var(--sk-border);
+  border-width: 1px 1px 0 1px;
+  border-radius: var(--sk-radius) var(--sk-radius) 0 0;
+}
+
+.etskin-on .OBWidgetBody {
+  background-color: var(--sk-surface);
+  border-color: var(--sk-border);
+  border-width: 0 1px 1px 1px;
+  border-radius: 0 0 var(--sk-radius) var(--sk-radius);
+  margin-bottom: 0;
+}
+
+.etskin-on .OBWidgetHeaderText {
+  font-family: var(--sk-font);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 20px;
+  color: var(--sk-text);
+  padding-left: 14px;
+}
+
+/* Stock gives the header icons a green outline and the close icon an orange one. */
+.etskin-on [class^="OBWidgetIcon"] {
+  border-color: transparent !important;
+}
+
+.etskin-on .OBWidgetMenu {
+  background-color: var(--sk-surface);
+  border: 1px solid var(--sk-border);
+  border-radius: var(--sk-radius-sm);
+  box-shadow: var(--sk-shadow-md);
 }
 
 /* -------------------------------------------------------------- statusbar */
@@ -1639,89 +1719,6 @@
   color: var(--sk-primary);
 }
 
-/* ----------------------------------------------------------- boot screen */
-
-/*
- * index.jsp paints a boot screen before a single line of our JavaScript has run: a white sheet,
- * the word LOADING in 12px Arial and a 220x16 animated GIF from the SmartClient skin folder. It is
- * the first thing anyone sees and it belonged to a different decade.
- *
- * Two things follow from when it renders. It cannot be scoped under .etskin-on, because the script
- * that adds that class is the very last thing the page loads - so, like the login page, the boot
- * screen is not per client and takes the default palette. And it has to be addressed through
- * #OBLoadingDiv: .OBLoadingPromptModalMask and .OBLoadingPromptLabel are also SmartClient's
- * mainLayoutStyleName and loadingTextStyleName for the in-application loading prompt (see
- * ob-application-styles.js), and that one must keep behaving as it does.
- *
- * index.jsp declares its own copy of these rules in an inline <style> after our <link>, so equal
- * specificity would lose. The id carries the weight; nothing here needs !important.
- *
- * The markup is untouched. The table holding LOADING and the GIF is simply not displayed, and the
- * mark and the progress bar are two pseudo elements on the box that held it. Hiding rather than
- * rewording also sidesteps a small trap: that string is hardcoded English in the template, so any
- * label we put back through content: would be untranslatable.
- */
-
-#OBLoadingDiv {
-  position: fixed;
-  inset: 0;
-  /* Stock leaves the mask at the default stacking level and only lifts the box inside it, which
-     works right up to the moment OB.Layout.draw() starts creating canvases with six figure
-     z-indexes - the half drawn application then shows through the mask it is supposed to be
-     hidden behind. One below the box it contains is enough to close that window. */
-  z-index: 999999;
-  background-color: var(--sk-canvas-tint);
-  background-image: linear-gradient(var(--sk-canvas) 0%, var(--sk-canvas-tint) 82%);
-}
-
-#OBLoadingDiv .OBCenteredBox {
-  /* The stock box is 300x50 centred by a negative margin. Nothing goes in it any more, so it
-     shrinks to its content and centres on the transform instead. */
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  width: auto;
-  height: auto;
-  margin: 0;
-  transform: translate(-50%, -50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 28px;
-}
-
-#OBLoadingDiv table {
-  display: none;
-}
-
-/* The same mark the login page shows, so the two screens are one sequence. */
-#OBLoadingDiv .OBCenteredBox::before {
-  content: "";
-  width: 191px;
-  height: 43px;
-  background-image: url(./../../images/etendo/EtendoWithVersion_Logo.png);
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: contain;
-}
-
-/*
- * An indeterminate bar rather than a spinner: boot takes a few seconds and a bar reads as progress
- * where a spinner reads as a stall. It is one element - the track is the background colour, the
- * head is a gradient 45% as wide sliding across it.
- */
-#OBLoadingDiv .OBCenteredBox::after {
-  content: "";
-  width: 208px;
-  height: 3px;
-  border-radius: 999px;
-  background-color: color-mix(in srgb, var(--sk-primary) 15%, transparent);
-  background-image: linear-gradient(90deg, transparent 0%, var(--sk-primary) 50%, transparent 100%);
-  background-repeat: no-repeat;
-  background-size: 45% 100%;
-  animation: etskin-loading-bar 1150ms ease-in-out infinite;
-}
-
 @keyframes etskin-loading-bar {
   from {
     background-position: -60% 0;
@@ -1735,15 +1732,14 @@
 /* ------------------------------------------------ in-application loading */
 
 /*
- * The boot screen is not the only place the old loading art shows up. Opening a window, switching
+ * The stock loading art shows up inside the application too. Opening a window, switching
  * to a tab whose pane has not been built yet, the calendar and the branding widget all call
  * OB.Utilities.createLoadingLayout, which lays a label next to
  * OB.Styles.LoadingPrompt.loadingImage - the same 220x16 animated GIF index.jsp used. Deleting
- * records calls isc.showPrompt with the same file. So the second half of the fix lives here.
+ * records calls isc.showPrompt with the same file.
  *
  * The image is replaced rather than hidden. A 1x1 transparent GIF in `content:` empties the
- * element while leaving it a box we can paint, and the bar is then the boot bar's own declarations
- * on that box. Hiding the img instead would take its background with it, and removing it in JS
+ * element while leaving it a box we can paint, and a slim animated bar is painted on that box. Hiding the img instead would take its background with it, and removing it in JS
  * would mean overriding a core function that another module (com.smf.smartclient.boostedui) also
  * overrides.
  *
@@ -1778,7 +1774,7 @@
 }
 
 /*
- * Unlike the boot screen's hardcoded "LOADING...", this label is OBUIAPP_LOADING and is
+ * Unlike the hardcoded "LOADING..." of index.jsp, this label is OBUIAPP_LOADING and is
  * translated, so it is worth keeping - it is the only thing here a screen reader can read. It just
  * stops looking like a heading.
  */
@@ -1791,7 +1787,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  #OBLoadingDiv .OBCenteredBox::after,
   .etskin-on img[src$="windowLoading.gif"] {
     animation: none;
     background-image: none;
@@ -2518,12 +2513,18 @@
   background-color: var(--sk-primary-softer);
 }
 
+/*
+ * The label cell is left-aligned inline by the framework and starts flush against the pill's
+ * border, so the inset is put back here; the end padding is the chevron's room plus the gap that
+ * keeps the word off it.
+ */
 .etskin-on .etskin-tb-actions [class^="OBToolbarIconButton"] {
   font-family: var(--sk-font);
   font-size: 13px;
   font-weight: 500;
   color: var(--sk-text);
-  padding-inline-end: 16px;
+  padding-inline-start: 14px;
+  padding-inline-end: 24px;
 }
 
 /* The chevron, drawn on the wrapper so it does not disturb the label cell's centring. */
@@ -2556,31 +2557,2194 @@
 
 /* ---------------------------------------------------------- toolbar menus */
 
-.etskin-on .etskin-menu,
-.etskin-on [class^="etskin-menu"] {
+/*
+ * A SmartClient menu is a grid, and the class given to it lands on the outer element that merely
+ * positions the thing - never on what is seen. The panel is the grid's body, named through
+ * bodyStyleName, and the rows are its cells, which keep the framework's own class no matter what
+ * the menu is called. So the outer element is emptied, the body is given the card, and the cells
+ * are addressed by the framework's name for them, scoped inside the body so that only the menus
+ * this skin opens are touched and the ones the platform opens elsewhere are left alone.
+ */
+.etskin-on .etskin-menu {
+  background: transparent none;
+  border: 0 none;
+  box-shadow: none;
+}
+
+.etskin-on .etskin-menuBody {
   background-color: var(--sk-surface);
   border: 1px solid var(--sk-border);
   border-radius: var(--sk-radius);
   box-shadow: var(--sk-shadow-md);
-  padding: 4px;
+  padding: 4px 0;
+  overflow: hidden;
 }
 
-.etskin-on .etskin-menuTable,
-.etskin-on [class^="etskin-menu"] table {
-  border-collapse: separate;
+.etskin-on .etskin-menuBody table {
+  border-collapse: collapse;
+  background: transparent none;
 }
 
-.etskin-on [class^="etskin-menu"] td {
+/*
+ * menuTitleField is the framework's name for the label column; the suffixes it appends carry the
+ * row's state - Over, Disabled, Selected - so the prefix catches every one of them. The stock skin
+ * paints those states with gradient images, inset shadows and a border, all of which have to be
+ * named to be undone.
+ */
+.etskin-on .etskin-menuBody [class^="menuTitleField"],
+.etskin-on .etskin-menuBody [class^="menuIconField"],
+.etskin-on .etskin-menuBody [class^="menuKeyField"],
+.etskin-on .etskin-menuBody [class^="menuSubmenuField"] {
+  font-family: var(--sk-font);
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.4;
+  color: var(--sk-text);
+  background: transparent none;
+  border: 0 none;
+  box-shadow: none;
+  padding: 0 14px;
+  white-space: nowrap;
+}
+
+.etskin-on .etskin-menuBody [class^="menuTitleField"]:hover,
+.etskin-on .etskin-menuBody [class$="Over"] {
+  background: var(--sk-primary-soft) none;
+  color: var(--sk-text);
+}
+
+/*
+ * A process the record does not allow yet is still worth showing, because its absence is harder
+ * to read than its presence: greyed out says not now, while nothing at all says never.
+ */
+.etskin-on .etskin-menuBody [class$="Disabled"],
+.etskin-on .etskin-menuBody [class$="DisabledOver"] {
+  color: var(--sk-text-faint);
+  background: transparent none;
+  cursor: default;
+}
+
+/* --------------------------------------------------- workspace dashboard */
+
+/*
+ * The dashboard is one canvas of HTML, laid out with grid rather than with nested SmartClient
+ * layouts: sixteen cards would otherwise be sixteen absolutely positioned widgets that have to be
+ * remeasured on every resize, and none of them would reflow on a narrow window.
+ */
+.etskin-on .etskinDashCanvas {
+  background-color: transparent;
+}
+
+.etskin-on .etskin-dash {
+  box-sizing: border-box;
+  padding: 20px 24px 24px;
+  font-family: var(--sk-font);
+  color: var(--sk-text);
+}
+
+.etskin-on .etskin-dash *,
+.etskin-on .etskin-dash *::before,
+.etskin-on .etskin-dash *::after {
+  box-sizing: border-box;
+}
+
+.etskin-on .etskin-dash-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.etskin-on .etskin-dash-hello {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.etskin-on .etskin-dash-meta {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--sk-text-muted);
+}
+
+.etskin-on .etskin-dash-acts {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 8px;
+}
+
+.etskin-on .etskin-dash-act {
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--sk-border);
+  border-radius: var(--sk-radius-sm);
+  background-color: var(--sk-surface);
+  color: var(--sk-text);
+  font-family: var(--sk-font);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease;
+}
+
+.etskin-on .etskin-dash-act:hover {
+  border-color: var(--sk-border-strong);
+  background-color: var(--sk-neutral-softer);
+}
+
+.etskin-on .etskin-dash-act-quiet {
+  border-color: transparent;
+  background-color: transparent;
+  color: var(--sk-text-muted);
+}
+
+.etskin-on .etskin-dash-act:focus-visible,
+.etskin-on .etskin-dash-more:focus-visible,
+.etskin-on .etskin-dash-kpi:focus-visible,
+.etskin-on .etskin-dash-row:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--sk-focus-ring);
+}
+
+/* Four across on a full window, two on a half one, one on a narrow one - without a media query. */
+.etskin-on .etskin-dash-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.etskin-on .etskin-dash-kpi {
+  padding: 14px 16px;
+  border: 1px solid var(--sk-border);
+  border-radius: var(--sk-radius);
+  background-color: var(--sk-surface);
+  cursor: pointer;
+  transition: border-color 120ms ease, box-shadow 120ms ease, transform 120ms ease;
+}
+
+.etskin-on .etskin-dash-kpi:hover {
+  border-color: var(--sk-border-strong);
+  box-shadow: var(--sk-shadow-md);
+  transform: translateY(-1px);
+}
+
+.etskin-on .etskin-dash-kpi-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--sk-text-muted);
+}
+
+/*
+ * Figures are the one place on the screen where the digits have to line up between cards, so they
+ * are the one place that asks for tabular numerals.
+ */
+.etskin-on .etskin-dash-kpi-value {
+  margin-top: 8px;
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15;
+}
+
+.etskin-on .etskin-dash-kpi-foot {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--sk-text-muted);
+}
+
+/* The money the company is owed is the one figure that carries the primary colour. */
+.etskin-on .etskin-dash-kpi-accent .etskin-dash-kpi-value {
+  color: var(--sk-primary);
+}
+
+/*
+ * A currency code is a unit, not a value: same colour as the caption around it, so it never
+ * competes with the number it belongs to.
+ */
+.etskin-on .etskin-dash-cur {
+  font-size: 0.8em;
+  font-weight: 500;
+  color: var(--sk-text-faint);
+}
+
+.etskin-on .etskin-dash-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.etskin-on .etskin-dash-card {
+  border: 1px solid var(--sk-border);
+  border-radius: var(--sk-radius);
+  background-color: var(--sk-surface);
+  overflow: hidden;
+}
+
+.etskin-on .etskin-dash-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--sk-border);
+}
+
+.etskin-on .etskin-dash-card-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.etskin-on .etskin-dash-more {
+  padding: 3px 6px;
+  border: 0 none;
+  border-radius: var(--sk-radius-sm);
+  background-color: transparent;
+  color: var(--sk-primary);
+  font-family: var(--sk-font);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.etskin-on .etskin-dash-more:hover {
+  background-color: var(--sk-primary-softer);
+}
+
+.etskin-on .etskin-dash-rows {
+  padding: 4px 0;
+}
+
+.etskin-on .etskin-dash-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 16px;
+  cursor: pointer;
+}
+
+.etskin-on .etskin-dash-row:hover {
+  background-color: var(--sk-primary-softer);
+}
+
+.etskin-on .etskin-dash-row-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.etskin-on .etskin-dash-row-title,
+.etskin-on .etskin-dash-row-sub {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.etskin-on .etskin-dash-row-title {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.etskin-on .etskin-dash-row-sub {
+  font-size: 12px;
+  color: var(--sk-text-muted);
+}
+
+.etskin-on .etskin-dash-row-side {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: flex-end;
+  white-space: nowrap;
+}
+
+.etskin-on .etskin-dash-row-value {
+  font-size: 13px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.etskin-on .etskin-dash-row-meta {
+  font-size: 11px;
+  color: var(--sk-text-faint);
+}
+
+/* An empty list still has to say something, and what it says is not a row you can click. */
+.etskin-on .etskin-dash-row-quiet,
+.etskin-on .etskin-dash-row-quiet:hover {
+  padding: 13px 16px;
+  background-color: transparent;
+  color: var(--sk-text-faint);
+  font-size: 12px;
+  cursor: default;
+}
+
+/*
+ * Every figure is a request, and the four of them answer at different moments. A bar that pulses
+ * where the number will be says the card is working; an empty card says it is broken.
+ */
+.etskin-on .etskin-dash-skel {
+  display: inline-block;
+  width: 96px;
+  height: 13px;
+  border-radius: var(--sk-radius-sm);
+  background-color: var(--sk-neutral-soft);
+  animation: etskin-dash-pulse 1200ms ease-in-out infinite;
+}
+
+.etskin-on .etskin-dash-kpi-value .etskin-dash-skel {
+  width: 132px;
+  height: 20px;
+}
+
+@keyframes etskin-dash-pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* ------------------------------------------------------------ status badge */
+
+/*
+ * The document status, wherever it is shown: a grid cell, a card on the order board. Five tones,
+ * one rule each, and the tone is decided in JavaScript from the status value - see STATUS_TONES in
+ * etendo-skin.js for which value takes which tone and why.
+ *
+ * The badge is sized to sit inside a 38px grid row without changing it, and it is allowed to
+ * ellipsize rather than to widen its column: Closed - Order Created is a long name and a status
+ * column that grew to fit it would take the room from the columns that carry the document.
+ */
+.etskin-on .etskin-status {
+  display: inline-block;
+  max-width: 100%;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 15px;
+  letter-spacing: 0.01em;
+  vertical-align: middle;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border: 1px solid transparent;
+  border-radius: 999px;
+}
+
+/* Not started, or not a state anybody acts on. */
+.etskin-on .etskin-status-neutral {
+  color: var(--sk-text-muted);
+  background-color: var(--sk-neutral-soft);
+  border-color: var(--sk-border);
+}
+
+/* Under way. The working state is the primary tone rather than green, so that green is left to
+   mean finished and the two cannot be confused down a column. */
+.etskin-on .etskin-status-active {
+  color: var(--sk-primary);
+  background-color: var(--sk-primary-soft);
+  border-color: color-mix(in srgb, var(--sk-primary) 30%, transparent);
+}
+
+/* Finished. */
+.etskin-on .etskin-status-done {
+  color: var(--sk-success);
+  background-color: color-mix(in srgb, var(--sk-success) 12%, var(--sk-surface));
+  border-color: color-mix(in srgb, var(--sk-success) 32%, transparent);
+}
+
+/* Wants attention but is not a failure. */
+.etskin-on .etskin-status-warn {
+  color: var(--sk-warning);
+  background-color: color-mix(in srgb, var(--sk-warning) 14%, var(--sk-surface));
+  border-color: color-mix(in srgb, var(--sk-warning) 34%, transparent);
+}
+
+/* Voided, rejected, refused or in error. */
+.etskin-on .etskin-status-bad {
+  color: var(--sk-danger);
+  background-color: color-mix(in srgb, var(--sk-danger) 11%, var(--sk-surface));
+  border-color: color-mix(in srgb, var(--sk-danger) 32%, transparent);
+}
+
+/* A selected grid row inverts its own text colour, and a badge inside it must not be left reading
+   its tone against the selection fill. */
+.etskin-on .OBGridRowSelected .etskin-status,
+.etskin-on .OBGridRowSelectedOver .etskin-status {
+  background-color: var(--sk-surface);
+}
+
+/* ------------------------------------------------------------ point of sale */
+
+/*
+ * A till is a two handed screen: the catalogue takes the room it can get and the ticket is a fixed
+ * column beside it, because the total has to be in the same place on every ticket. Both panes
+ * scroll on their own and the page itself never does - the payment buttons must not be able to
+ * scroll out of reach.
+ *
+ * The canvas is positioned absolutely by SmartClient, so the markup fills it with inset rather
+ * than with a height in percent, which is the one measurement a canvas of HTML contents does not
+ * reliably hand down.
+ */
+.etskin-on .etskin-pos {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--sk-font);
+  color: var(--sk-text);
+  background-color: var(--sk-canvas-tint);
+  -webkit-font-smoothing: antialiased;
+}
+
+.etskin-on .etskin-pos *,
+.etskin-on .etskin-pos *::before,
+.etskin-on .etskin-pos *::after {
+  box-sizing: border-box;
+}
+
+.etskin-on .etskin-pos button {
+  font-family: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.etskin-on .etskin-pos button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.etskin-on .etskin-pos button:focus-visible,
+.etskin-on .etskin-pos input:focus-visible {
+  outline: 2px solid var(--sk-focus-ring);
+  outline-offset: 1px;
+}
+
+/* The five categories are told apart by colour as well as by name, and one custom property per
+   category keeps that colour in one place: the chip, the tile border and the monogram all read it. */
+.etskin-on .etskin-pos-cat-1 { --pos-cat: #0284c7; }
+.etskin-on .etskin-pos-cat-2 { --pos-cat: #b45309; }
+.etskin-on .etskin-pos-cat-3 { --pos-cat: #7c3aed; }
+.etskin-on .etskin-pos-cat-4 { --pos-cat: #047857; }
+.etskin-on .etskin-pos-cat-5 { --pos-cat: #db2777; }
+
+/* ---- head */
+
+.etskin-on .etskin-pos-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 0 0 auto;
+  padding: 0 18px;
+  height: 54px;
+  background-color: var(--sk-surface);
+  border-bottom: 1px solid var(--sk-border);
+}
+
+.etskin-on .etskin-pos-id {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.etskin-on .etskin-pos-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/*
+ * The badge is not decoration. This screen reads nothing and writes nothing, and the only thing
+ * standing between that and a demonstration in which someone believes a sale was recorded is a
+ * label on the screen saying which it is.
+ */
+.etskin-on .etskin-pos-badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background-color: color-mix(in srgb, var(--sk-warning) 14%, var(--sk-surface));
+  color: var(--sk-warning);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.etskin-on .etskin-pos-meta {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--sk-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.etskin-on .etskin-pos-head-acts {
+  display: flex;
+  gap: 8px;
+}
+
+.etskin-on .etskin-pos-link {
+  padding: 4px 8px;
+  border: 0;
+  border-radius: var(--sk-radius-sm);
+  background-color: transparent;
+  color: var(--sk-primary);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.etskin-on .etskin-pos-link:hover {
+  background-color: var(--sk-primary-soft);
+}
+
+/* ---- body */
+
+.etskin-on .etskin-pos-body {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.etskin-on .etskin-pos-catalogue {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 14px 16px 16px;
+}
+
+.etskin-on .etskin-pos-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+  padding-bottom: 12px;
+}
+
+.etskin-on .etskin-pos-search {
+  position: relative;
+  flex: 0 0 240px;
+}
+
+.etskin-on .etskin-pos-search-input {
+  width: 100%;
+  height: 32px;
+  padding: 0 10px 0 30px;
+  border: 1px solid var(--sk-border);
+  border-radius: var(--sk-radius-sm);
+  background-color: var(--sk-surface);
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--sk-text);
+}
+
+.etskin-on .etskin-pos-search-icon {
+  position: absolute;
+  left: 9px;
+  top: 9px;
+  width: 14px;
+  height: 14px;
+  background-color: var(--sk-text-faint);
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: 14px 14px;
+  mask-size: 14px 14px;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14z M20 20l-4.3-4.3'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14z M20 20l-4.3-4.3'/%3E%3C/svg%3E");
+}
+
+.etskin-on .etskin-pos-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.etskin-on .etskin-pos-chip {
+  padding: 5px 11px;
+  border: 1px solid var(--sk-border);
+  border-radius: 999px;
+  background-color: var(--sk-surface);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--sk-text-muted);
+}
+
+.etskin-on .etskin-pos-chip:hover {
+  border-color: var(--sk-border-strong);
+  color: var(--sk-text);
+}
+
+.etskin-on .etskin-pos-chip-on {
+  border-color: transparent;
+  background-color: color-mix(in srgb, var(--pos-cat, var(--sk-primary)) 12%, var(--sk-surface));
+  color: var(--pos-cat, var(--sk-primary));
+}
+
+/* ---- tiles */
+
+/*
+ * auto-fill rather than a column count: the till is a tab in a window that can be any width, and
+ * the tiles have to reflow when the navigation panel opens without anything here knowing that it
+ * did.
+ */
+.etskin-on .etskin-pos-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(136px, 1fr));
+  gap: 10px;
+  align-content: start;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 2px;
+}
+
+.etskin-on .etskin-pos-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 96px;
+  padding: 10px 12px 11px;
+  border: 1px solid var(--sk-border);
+  border-radius: var(--sk-radius);
+  background-color: var(--sk-surface);
+  text-align: left;
+  transition: box-shadow 120ms ease, transform 120ms ease, border-color 120ms ease;
+}
+
+.etskin-on .etskin-pos-tile:hover {
+  border-color: color-mix(in srgb, var(--pos-cat) 40%, var(--sk-border));
+  box-shadow: var(--sk-shadow-sm);
+}
+
+.etskin-on .etskin-pos-tile:active {
+  transform: translateY(1px);
+}
+
+.etskin-on .etskin-pos-tile-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--sk-radius-sm);
+  background-color: color-mix(in srgb, var(--pos-cat) 12%, var(--sk-surface));
+  color: var(--pos-cat);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.etskin-on .etskin-pos-tile-name {
+  flex: 1 1 auto;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--sk-text);
+}
+
+.etskin-on .etskin-pos-tile-price {
+  font-size: 14px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.etskin-on .etskin-pos-empty {
+  margin: 0;
+  padding: 24px 4px;
+  color: var(--sk-text-faint);
+  font-size: 12px;
+}
+
+.etskin-on .etskin-pos-empty-ticket {
+  padding: 28px 16px;
+  text-align: center;
+}
+
+/* ---- ticket */
+
+.etskin-on .etskin-pos-ticket {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 372px;
+  min-height: 0;
+  background-color: var(--sk-surface);
+  border-inline-start: 1px solid var(--sk-border);
+}
+
+.etskin-on .etskin-pos-ticket-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--sk-border-hairline);
+}
+
+.etskin-on .etskin-pos-customer {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.etskin-on .etskin-pos-customer-name {
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.etskin-on .etskin-pos-customer-note {
+  font-size: 11px;
+  color: var(--sk-text-faint);
+}
+
+.etskin-on .etskin-pos-lines {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+.etskin-on .etskin-pos-line {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--sk-border-hairline);
+}
+
+.etskin-on .etskin-pos-line-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.etskin-on .etskin-pos-line-name {
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.etskin-on .etskin-pos-line-unit {
+  font-size: 11px;
+  color: var(--sk-text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.etskin-on .etskin-pos-step {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--sk-border);
+  border-radius: var(--sk-radius-sm);
+  overflow: hidden;
+}
+
+.etskin-on .etskin-pos-step-btn {
+  width: 24px;
+  height: 24px;
+  border: 0;
+  background-color: transparent;
+  font-size: 13px;
+  line-height: 1;
+  color: var(--sk-text-muted);
+}
+
+.etskin-on .etskin-pos-step-btn:hover {
+  background-color: var(--sk-neutral-soft);
+  color: var(--sk-text);
+}
+
+.etskin-on .etskin-pos-step-qty {
+  min-width: 26px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.etskin-on .etskin-pos-line-total {
+  min-width: 58px;
+  text-align: right;
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.etskin-on .etskin-pos-line-drop {
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: var(--sk-radius-sm);
+  background-color: transparent;
+  color: var(--sk-text-faint);
+  font-size: 14px;
+  line-height: 1;
+}
+
+.etskin-on .etskin-pos-line-drop:hover {
+  background-color: color-mix(in srgb, var(--sk-danger) 10%, transparent);
+  color: var(--sk-danger);
+}
+
+/* ---- totals and payment */
+
+.etskin-on .etskin-pos-sums {
+  flex: 0 0 auto;
+  padding: 12px 14px 10px;
+  border-top: 1px solid var(--sk-border);
+}
+
+.etskin-on .etskin-pos-sum {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 2px 0;
+  font-size: 12px;
+  color: var(--sk-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.etskin-on .etskin-pos-sum-total {
+  margin-top: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--sk-border-hairline);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--sk-text);
+}
+
+.etskin-on .etskin-pos-units {
+  display: block;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--sk-text-faint);
+}
+
+.etskin-on .etskin-pos-cur {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--sk-text-faint);
+  letter-spacing: 0.02em;
+}
+
+.etskin-on .etskin-pos-tender {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px 8px;
+}
+
+.etskin-on .etskin-pos-tender-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex: 1 1 auto;
+  font-size: 12px;
+  color: var(--sk-text-muted);
+}
+
+.etskin-on .etskin-pos-tender-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--sk-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.etskin-on .etskin-pos-short {
+  color: var(--sk-danger);
+}
+
+.etskin-on .etskin-pos-exact {
+  padding: 4px 9px;
+  border: 1px solid var(--sk-border);
+  border-radius: var(--sk-radius-sm);
+  background-color: var(--sk-surface);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--sk-text-muted);
+}
+
+.etskin-on .etskin-pos-exact:hover:not(:disabled) {
+  border-color: var(--sk-border-strong);
+  color: var(--sk-text);
+}
+
+/*
+ * The keypad reads digits as cents, the way a terminal does: 2 0 5 0 is 20.50, and there is no
+ * decimal key to press by mistake. It is on screen at all times rather than behind a payment
+ * dialog, because tendering is the one number a cashier types.
+ */
+.etskin-on .etskin-pos-pad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  padding: 0 14px 10px;
+}
+
+.etskin-on .etskin-pos-key {
+  height: 38px;
+  border: 1px solid var(--sk-border);
+  border-radius: var(--sk-radius-sm);
+  background-color: var(--sk-field-fill);
+  font-size: 14px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.etskin-on .etskin-pos-key:hover {
+  background-color: var(--sk-neutral-soft);
+}
+
+.etskin-on .etskin-pos-key:active {
+  background-color: var(--sk-primary-soft);
+  border-color: var(--sk-primary);
+}
+
+.etskin-on .etskin-pos-key-clear {
+  color: var(--sk-danger);
+}
+
+.etskin-on .etskin-pos-notice {
+  margin: 0;
+  padding: 0 14px 8px;
+  color: var(--sk-danger);
+  font-size: 11px;
+}
+
+.etskin-on .etskin-pos-pay {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 0 14px 14px;
+}
+
+.etskin-on .etskin-pos-btn {
+  height: 42px;
+  border: 1px solid transparent;
+  border-radius: var(--sk-radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.etskin-on .etskin-pos-btn-cash {
+  background-color: var(--sk-primary);
+  color: var(--sk-on-primary);
+}
+
+.etskin-on .etskin-pos-btn-cash:hover:not(:disabled) {
+  background-color: var(--sk-primary-hover);
+}
+
+.etskin-on .etskin-pos-btn-card {
+  background-color: var(--sk-surface);
+  border-color: var(--sk-border-strong);
+  color: var(--sk-text);
+}
+
+.etskin-on .etskin-pos-btn-card:hover:not(:disabled) {
+  background-color: var(--sk-neutral-soft);
+}
+
+/* ---- receipt */
+
+.etskin-on .etskin-pos-receipt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  flex: 1 1 auto;
+  padding: 34px 22px 22px;
+  text-align: center;
+}
+
+/* A tick drawn from two borders, so the confirmation costs no image and no icon font. */
+.etskin-on .etskin-pos-receipt-mark {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background-color: color-mix(in srgb, var(--sk-success) 12%, var(--sk-surface));
+  position: relative;
+}
+
+.etskin-on .etskin-pos-receipt-mark::after {
+  content: "";
+  position: absolute;
+  left: 16px;
+  top: 14px;
+  width: 13px;
+  height: 7px;
+  border-left: 2.5px solid var(--sk-success);
+  border-bottom: 2.5px solid var(--sk-success);
+  transform: rotate(-45deg);
+}
+
+.etskin-on .etskin-pos-receipt-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--sk-success);
+}
+
+.etskin-on .etskin-pos-receipt-sum {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.etskin-on .etskin-pos-receipt-list {
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 4px 18px;
+  margin: 6px 0 12px;
+  width: 100%;
+  max-width: 260px;
+  font-size: 12px;
+}
+
+.etskin-on .etskin-pos-receipt-list dt {
+  text-align: left;
+  color: var(--sk-text-muted);
+}
+
+.etskin-on .etskin-pos-receipt-list dd {
+  margin: 0;
+  text-align: right;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.etskin-on .etskin-pos-receipt .etskin-pos-btn {
+  width: 100%;
+  max-width: 260px;
+}
+
+.etskin-on .etskin-pos-receipt-note {
+  margin: 4px 0 0;
+  font-size: 11px;
+  color: var(--sk-text-faint);
+}
+
+/* The ticket column gives way first on a narrow window: a cramped catalogue is unusable, a
+   cramped ticket is merely tight. */
+@media (max-width: 1120px) {
+  .etskin-on .etskin-pos-ticket {
+    flex-basis: 320px;
+  }
+}
+
+/* --------------------------------------------------------- sales order board */
+
+/*
+ * A board is a row of columns that scrolls sideways while each column scrolls on its own, and the
+ * page itself never scrolls: the header and the staged-moves bar have to stay where they are, and
+ * a column header has to stay above its own cards while they move.
+ *
+ * As with the point of sale, the canvas is positioned absolutely by SmartClient, so the markup
+ * fills it with inset rather than a height in percent.
+ */
+.etskin-on .etskin-kb {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--sk-font);
+  color: var(--sk-text);
+  background-color: var(--sk-canvas-tint);
+  -webkit-font-smoothing: antialiased;
+}
+
+.etskin-on .etskin-kb *,
+.etskin-on .etskin-kb *::before,
+.etskin-on .etskin-kb *::after {
+  box-sizing: border-box;
+}
+
+.etskin-on .etskin-kb button {
+  font-family: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.etskin-on .etskin-kb button:focus-visible {
+  outline: 2px solid var(--sk-focus-ring);
+  outline-offset: 1px;
+}
+
+/* While a card is in the air, nothing on the board is selectable text and every column shows the
+   grabbing cursor: a drag that highlights a paragraph on the way past looks broken. */
+.etskin-on .etskin-kb-dragging {
+  user-select: none;
+  cursor: grabbing;
+}
+
+/* ---- head */
+
+.etskin-on .etskin-kb-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 0 0 auto;
+  padding: 14px 20px;
+  background-color: var(--sk-surface);
+  border-block-end: 1px solid var(--sk-border-hairline);
+}
+
+.etskin-on .etskin-kb-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.etskin-on .etskin-kb-sub {
+  font-size: 12px;
+  color: var(--sk-text-muted);
+}
+
+.etskin-on .etskin-kb-acts {
+  display: flex;
+  gap: 6px;
+  margin-inline-start: auto;
+}
+
+.etskin-on .etskin-kb-act {
+  height: 28px;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 500;
+  background-color: var(--sk-surface);
+  border: 1px solid var(--sk-border-strong);
+  border-radius: var(--sk-radius-sm);
+}
+
+.etskin-on .etskin-kb-act:hover {
+  background-color: var(--sk-neutral-soft);
+}
+
+/* ---- staged moves */
+
+/*
+ * The bar is always there, not raised on the first drop, because its job is to be read before
+ * anyone drags anything. Quiet while there is nothing staged; in the warning colour, which is the
+ * token for "this is not what it looks like", as soon as there is.
+ */
+.etskin-on .etskin-kb-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 0 0 auto;
+  padding: 8px 20px;
+  font-size: 12px;
+  color: var(--sk-text-muted);
+  background-color: var(--sk-band);
+  border-block-end: 1px solid var(--sk-border-hairline);
+}
+
+.etskin-on .etskin-kb-bar-live {
+  color: var(--sk-text);
+  background-color: color-mix(in srgb, var(--sk-warning) 12%, var(--sk-surface));
+  border-block-end-color: color-mix(in srgb, var(--sk-warning) 40%, var(--sk-border));
+}
+
+.etskin-on .etskin-kb-bar-text {
+  font-weight: 500;
+}
+
+.etskin-on .etskin-kb-bar-notice {
+  color: var(--sk-text-faint);
+}
+
+.etskin-on .etskin-kb-bar .etskin-kb-act {
+  margin-inline-start: auto;
+}
+
+/* ---- columns */
+
+.etskin-on .etskin-kb-body {
+  display: flex;
+  gap: 14px;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 16px 20px 20px;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+/* A column neither grows nor shrinks: columns of different widths would make a board that has to
+   be read twice, and a shrinking one turns into a strip as soon as there are five of them. */
+.etskin-on .etskin-kb-col {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 264px;
+  min-height: 0;
+  background-color: var(--sk-surface);
+  border: 1px solid var(--sk-border);
+  border-block-start: 3px solid var(--kb-accent, var(--sk-border-strong));
+  border-radius: var(--sk-radius);
+  box-shadow: var(--sk-shadow-sm);
+}
+
+/* One custom property per status, read by the column's top border. The colours are the same four
+   the rest of the skin uses for a state: neutral for a draft, primary for the booked ones, muted
+   for closed, danger for voided. */
+.etskin-on .etskin-kb-col[data-accent='draft'] { --kb-accent: var(--sk-border-strong); }
+.etskin-on .etskin-kb-col[data-accent='booked'] { --kb-accent: var(--sk-primary); }
+.etskin-on .etskin-kb-col[data-accent='closed'] { --kb-accent: var(--sk-success); }
+.etskin-on .etskin-kb-col[data-accent='voided'] { --kb-accent: var(--sk-danger); }
+.etskin-on .etskin-kb-col[data-accent='other'] { --kb-accent: var(--sk-warning); }
+
+/* The column under the pointer says so with its own fill and edge rather than with a moving
+   placeholder among the cards: the cards below stay where the eye left them, and the answer to
+   "where would this land" is the whole column, which is all a status board can promise. */
+.etskin-on .etskin-kb-col-over {
+  border-color: var(--sk-primary);
+  background-color: var(--sk-primary-soft);
+  box-shadow: var(--sk-shadow-md);
+}
+
+.etskin-on .etskin-kb-col-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  padding: 10px 12px;
+  border-block-end: 1px solid var(--sk-border-hairline);
+}
+
+.etskin-on .etskin-kb-col-name {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--sk-text);
+}
+
+.etskin-on .etskin-kb-col-count {
+  margin-inline-start: auto;
+  padding: 1px 7px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--sk-text-muted);
+  background-color: var(--sk-neutral-soft);
+  border-radius: 999px;
+}
+
+.etskin-on .etskin-kb-col-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 10px;
+  overflow-y: auto;
+}
+
+.etskin-on .etskin-kb-col-empty {
+  margin: 6px 2px;
+  font-size: 12px;
+  color: var(--sk-text-faint);
+}
+
+.etskin-on .etskin-kb-more {
+  flex: 0 0 auto;
+  height: 28px;
+  font-size: 12px;
+  color: var(--sk-primary);
+  background-color: transparent;
+  border: 1px dashed var(--sk-border-strong);
+  border-radius: var(--sk-radius-sm);
+}
+
+.etskin-on .etskin-kb-more:hover {
+  background-color: var(--sk-neutral-soft);
+}
+
+/* ---- cards */
+
+.etskin-on .etskin-kb-card {
+  flex: 0 0 auto;
+  padding: 9px 10px;
+  background-color: var(--sk-surface);
+  border: 1px solid var(--sk-border);
+  border-radius: var(--sk-radius-sm);
+  cursor: grab;
+}
+
+.etskin-on .etskin-kb-card:hover {
+  border-color: var(--sk-border-strong);
+  box-shadow: var(--sk-shadow-sm);
+}
+
+/* The card left behind stays in place and stays legible - it is where the drag will be undone to
+   if the pointer is let go over nothing - but it reads as absent. */
+.etskin-on .etskin-kb-card-dragging {
+  opacity: 0.35;
+}
+
+/* A card whose move is staged carries the mark for it, so the board can be read for what has been
+   asked for and not just for where the cards are. */
+.etskin-on .etskin-kb-card-moved {
+  border-color: color-mix(in srgb, var(--sk-warning) 55%, var(--sk-border));
+  background-color: color-mix(in srgb, var(--sk-warning) 7%, var(--sk-surface));
+}
+
+.etskin-on .etskin-kb-card-top {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.etskin-on .etskin-kb-doc {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* Amounts are right aligned and tabular so a column of them can be compared down the page, and
+   the currency is stated on every card because a board of orders in three currencies has no total
+   and must not look as though it has one. */
+.etskin-on .etskin-kb-amount {
+  margin-inline-start: auto;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.etskin-on .etskin-kb-amount i {
+  font-size: 10px;
+  font-style: normal;
+  color: var(--sk-text-faint);
+}
+
+.etskin-on .etskin-kb-partner {
+  margin-block-start: 3px;
+  font-size: 12px;
+  color: var(--sk-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.etskin-on .etskin-kb-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-block-start: 5px;
+  font-size: 11px;
+  color: var(--sk-text-faint);
+}
+
+.etskin-on .etskin-kb-chip {
+  margin-inline-start: auto;
+  padding: 1px 6px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--sk-warning);
+  background-color: color-mix(in srgb, var(--sk-warning) 14%, var(--sk-surface));
+  border-radius: 999px;
+}
+
+.etskin-on .etskin-kb-move {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-block-start: 6px;
+  padding-block-start: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--sk-warning);
+  border-block-start: 1px dashed color-mix(in srgb, var(--sk-warning) 45%, var(--sk-border));
+}
+
+.etskin-on .etskin-kb-move-arrow {
+  color: var(--sk-text-faint);
+}
+
+/* The card in the air. Fixed to the viewport because it is positioned from clientX and clientY,
+   and transparent to the pointer because elementFromPoint has to see the column underneath it and
+   not this. */
+.etskin-on .etskin-kb-ghost {
+  position: fixed;
+  z-index: 2000000;
+  pointer-events: none;
+  opacity: 0.95;
+  cursor: grabbing;
+  box-shadow: var(--sk-shadow-md);
+  transform: rotate(1.5deg);
+}
+
+/* A narrow window gets narrower columns rather than fewer: the board is meant to be read across,
+   and dropping a status off the end would hide orders. */
+@media (max-width: 1120px) {
+  .etskin-on .etskin-kb-col {
+    flex-basis: 224px;
+  }
+}
+
+/* ----------------------------------------------------------- copilot dock */
+
+/*
+ * Copilot, docked. The panel is a member of the application row - the tab set gives up exactly the
+ * width the chat takes, and nothing floats over the window - so everything here sizes from the
+ * canvas it is drawn into and scrolls inside it. Every colour is a palette token, like the rest of
+ * the skin, which is most of the point of not being an iframe any more.
+ */
+
+.etskin-on .etskinCopCanvas {
+  background-color: var(--sk-surface);
+}
+
+.etskin-on .etskin-cop-root {
+  position: relative;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
   font-family: var(--sk-font);
   font-size: 13px;
   color: var(--sk-text);
-  background-color: transparent;
-  border: 0 none;
-  padding: 0 10px;
+  background-color: var(--sk-surface);
+  border-inline-start: 1px solid var(--sk-border);
 }
 
-.etskin-on [class^="etskin-menu"] tr:hover td {
+/* ---- glyphs */
+
+.etskin-on .etskin-cop-root [class^="etskin-cop-i-"] {
+  display: block;
+  width: 15px;
+  height: 15px;
+  background-color: currentColor;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: 15px 15px;
+  mask-size: 15px 15px;
+}
+.etskin-on .etskin-cop-i-menu {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 7h16 M4 12h16 M4 17h16'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 7h16 M4 12h16 M4 17h16'/%3E%3C/svg%3E");
+}
+.etskin-on .etskin-cop-i-plus {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 5v14 M5 12h14'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 5v14 M5 12h14'/%3E%3C/svg%3E");
+}
+.etskin-on .etskin-cop-i-wide {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 7l-5 5 5 5 M15 7l5 5-5 5'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 7l-5 5 5 5 M15 7l5 5-5 5'/%3E%3C/svg%3E");
+}
+.etskin-on .etskin-cop-i-narrow {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 7l5 5-5 5 M19 7l-5 5 5 5'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 7l5 5-5 5 M19 7l-5 5 5 5'/%3E%3C/svg%3E");
+}
+.etskin-on .etskin-cop-i-close {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 6l12 12 M18 6L6 18'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 6l12 12 M18 6L6 18'/%3E%3C/svg%3E");
+}
+.etskin-on .etskin-cop-i-send {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 3L10 14 M21 3l-7 18-4-8-8-4z'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 3L10 14 M21 3l-7 18-4-8-8-4z'/%3E%3C/svg%3E");
+}
+.etskin-on .etskin-cop-i-attach {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 11l-8 8a4.5 4.5 0 0 1-6.4-6.4l8.2-8.2a3 3 0 0 1 4.3 4.3l-8.2 8.2a1.5 1.5 0 0 1-2.1-2.1L15 8'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 11l-8 8a4.5 4.5 0 0 1-6.4-6.4l8.2-8.2a3 3 0 0 1 4.3 4.3l-8.2 8.2a1.5 1.5 0 0 1-2.1-2.1L15 8'/%3E%3C/svg%3E");
+}
+.etskin-on .etskin-cop-i-search {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14z M20 20l-4.3-4.3'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14z M20 20l-4.3-4.3'/%3E%3C/svg%3E");
+}
+.etskin-on .etskin-cop-i-pencil {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 20h4L20 8l-4-4L4 16v4z'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 20h4L20 8l-4-4L4 16v4z'/%3E%3C/svg%3E");
+}
+.etskin-on .etskin-cop-i-archive {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 7h18v4H3z M5 11v9h14v-9 M10 15h4'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 7h18v4H3z M5 11v9h14v-9 M10 15h4'/%3E%3C/svg%3E");
+}
+.etskin-on .etskin-cop-i-trash {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 7h16 M9 7V4h6v3 M6 7l1 13h10l1-13'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 7h16 M9 7V4h6v3 M6 7l1 13h10l1-13'/%3E%3C/svg%3E");
+}
+.etskin-on .etskin-cop-i-restore {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 12a8 8 0 1 1-2.3-5.7 M20 4v5h-5'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 12a8 8 0 1 1-2.3-5.7 M20 4v5h-5'/%3E%3C/svg%3E");
+}
+.etskin-on .etskin-cop-i-check {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 13l4 4L19 7'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 13l4 4L19 7'/%3E%3C/svg%3E");
+}
+.etskin-on .etskin-cop-i-record {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 3h8l4 4v14H6z M14 3v4h4 M9 13h6 M9 17h4'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 3h8l4 4v14H6z M14 3v4h4 M9 13h6 M9 17h4'/%3E%3C/svg%3E");
+}
+.etskin-on .etskin-cop-star {
+  display: block;
+  width: 11px;
+  height: 11px;
+  background-color: currentColor;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: 11px 11px;
+  mask-size: 11px 11px;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23000'%3E%3Cpath d='M12 3l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.8 6.1 21l1.2-6.5L2.5 9.9 9.1 9z'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23000'%3E%3Cpath d='M12 3l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.8 6.1 21l1.2-6.5L2.5 9.9 9.1 9z'/%3E%3C/svg%3E");
+}
+.etskin-on .etskin-cop-caret {
+  display: block;
+  width: 11px;
+  height: 11px;
+  background-color: currentColor;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: 11px 11px;
+  mask-size: 11px 11px;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23000'%3E%3Cpath d='M9 6l6 6-6 6z'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23000'%3E%3Cpath d='M9 6l6 6-6 6z'/%3E%3C/svg%3E");
+}
+
+/* ---- conversation sidebar */
+
+/*
+ * The sidebar is an overlay while the panel is narrow and a column once it is wide, which is the
+ * same bargain the stock chat made between its two sizes. Sliding it in rather than swapping it
+ * keeps the composer and the log from reflowing under the user's hands.
+ */
+.etskin-on .etskin-cop-side {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  z-index: 3;
+  display: flex;
+  flex: 0 0 232px;
+  flex-direction: column;
+  gap: 8px;
+  width: 232px;
+  padding: 10px;
+  overflow: hidden;
+  background-color: var(--sk-band);
+  border-inline-end: 1px solid var(--sk-border);
+  transform: translateX(-104%);
+  transition: transform 150ms ease;
+}
+
+.etskin-on .etskin-cop-side-shown .etskin-cop-side {
+  transform: translateX(0);
+  box-shadow: var(--sk-shadow-md);
+}
+
+.etskin-on .etskin-cop-wide .etskin-cop-side {
+  position: relative;
+  transform: none;
+  box-shadow: none;
+}
+
+.etskin-on .etskin-cop-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: none;
+  background-color: var(--sk-canvas-tint);
+}
+
+.etskin-on .etskin-cop-side-shown .etskin-cop-scrim {
+  display: block;
+}
+
+.etskin-on .etskin-cop-wide .etskin-cop-scrim {
+  display: none;
+}
+
+.etskin-on .etskin-cop-side-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.etskin-on .etskin-cop-side-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--sk-text-faint);
+  text-transform: uppercase;
+}
+
+.etskin-on .etskin-cop-toggle {
+  padding: 2px 7px;
+  font: inherit;
+  font-size: 10px;
+  color: var(--sk-text-muted);
+  cursor: pointer;
+  background-color: transparent;
+  border: 1px solid var(--sk-border);
+  border-radius: 999px;
+}
+
+.etskin-on .etskin-cop-toggle-on {
+  color: var(--sk-on-primary);
+  background-color: var(--sk-primary);
+  border-color: var(--sk-primary);
+}
+
+.etskin-on .etskin-cop-assistants {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 132px;
+  overflow-y: auto;
+}
+
+.etskin-on .etskin-cop-assistant {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  font: inherit;
+  color: var(--sk-text);
+  text-align: start;
+  cursor: pointer;
+  background-color: transparent;
+  border: 0;
+  border-radius: var(--sk-radius-sm);
+}
+
+.etskin-on .etskin-cop-assistant:hover {
+  background-color: var(--sk-neutral-soft);
+}
+
+.etskin-on .etskin-cop-assistant-on {
+  color: var(--sk-primary);
   background-color: var(--sk-primary-soft);
+}
+
+.etskin-on .etskin-cop-assistant-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.etskin-on .etskin-cop-assistant .etskin-cop-star {
+  flex: 0 0 auto;
+  margin-inline-start: auto;
+  color: var(--sk-warning);
+}
+
+.etskin-on .etskin-cop-new {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 10px;
+  font: inherit;
+  font-weight: 600;
+  color: var(--sk-on-primary);
+  cursor: pointer;
+  background-color: var(--sk-primary);
+  border: 0;
+  border-radius: var(--sk-radius-sm);
+}
+
+.etskin-on .etskin-cop-new:hover {
+  background-color: var(--sk-primary-hover);
+}
+
+.etskin-on .etskin-cop-search {
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  color: var(--sk-text-faint);
+  background-color: var(--sk-field-fill);
+  border: 1px solid var(--sk-border);
+  border-radius: var(--sk-radius-sm);
+}
+
+.etskin-on .etskin-cop-search:focus-within {
+  background-color: var(--sk-surface);
+  border-color: var(--sk-primary);
+  box-shadow: 0 0 0 3px var(--sk-focus-ring);
+}
+
+.etskin-on .etskin-cop-search-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 6px 0 6px 7px;
+  font: inherit;
+  color: var(--sk-text);
+  background-color: transparent;
+  border: 0;
+  outline: none;
+}
+
+.etskin-on .etskin-cop-convs {
+  flex: 1 1 auto;
+  overflow-y: auto;
+}
+
+.etskin-on .etskin-cop-conv {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  cursor: pointer;
+  border-radius: var(--sk-radius-sm);
+}
+
+.etskin-on .etskin-cop-conv:hover {
+  background-color: var(--sk-neutral-soft);
+}
+
+.etskin-on .etskin-cop-conv-on {
+  color: var(--sk-primary);
+  background-color: var(--sk-primary-soft);
+}
+
+.etskin-on .etskin-cop-conv-title {
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.etskin-on .etskin-cop-conv-tools {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+}
+
+/*
+ * The row tools stay out of the way until the pointer is on the row - a list of conversations
+ * should read as titles - and come back for the keyboard, which cannot hover.
+ */
+.etskin-on .etskin-cop-conv:hover .etskin-cop-conv-tools,
+.etskin-on .etskin-cop-conv-tools:focus-within {
+  opacity: 1;
+}
+
+.etskin-on .etskin-cop-dot {
+  flex: 0 0 auto;
+  width: 6px;
+  height: 6px;
+  background-color: var(--sk-primary);
+  border-radius: 999px;
+}
+
+.etskin-on .etskin-cop-rename {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 4px 6px;
+  font: inherit;
+  color: var(--sk-text);
+  background-color: var(--sk-surface);
+  border: 1px solid var(--sk-primary);
+  border-radius: var(--sk-radius-sm);
+  outline: none;
+}
+
+.etskin-on .etskin-cop-arch-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 6px 8px;
+  font: inherit;
+  font-size: 11px;
+  color: var(--sk-text-muted);
+  text-align: start;
+  cursor: pointer;
+  background-color: transparent;
+  border: 0;
+  border-top: 1px solid var(--sk-border-hairline);
+}
+
+.etskin-on .etskin-cop-arch-head .etskin-cop-caret {
+  transition: transform 120ms ease;
+}
+
+.etskin-on .etskin-cop-arch-open .etskin-cop-caret {
+  transform: rotate(90deg);
+}
+
+.etskin-on .etskin-cop-conv-archived {
+  color: var(--sk-text-muted);
+  cursor: default;
+}
+
+.etskin-on .etskin-cop-empty {
+  margin: 6px 8px;
+  font-size: 11px;
+  color: var(--sk-text-faint);
+}
+
+/* ---- main column */
+
+.etskin-on .etskin-cop-main {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.etskin-on .etskin-cop-head {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 4px;
+  padding: 7px 8px;
+  background-color: var(--sk-surface);
+  border-bottom: 1px solid var(--sk-border);
+}
+
+.etskin-on .etskin-cop-head-text {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  padding-inline-start: 2px;
+}
+
+.etskin-on .etskin-cop-head-title {
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.etskin-on .etskin-cop-head-sub {
+  overflow: hidden;
+  font-size: 11px;
+  color: var(--sk-text-faint);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.etskin-on .etskin-cop-icon {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  color: var(--sk-text-muted);
+  cursor: pointer;
+  background-color: transparent;
+  border: 0;
+  border-radius: var(--sk-radius-sm);
+}
+
+.etskin-on .etskin-cop-icon:hover {
+  color: var(--sk-text);
+  background-color: var(--sk-neutral-soft);
+}
+
+.etskin-on .etskin-cop-send {
+  color: var(--sk-on-primary);
+  background-color: var(--sk-primary);
+}
+
+.etskin-on .etskin-cop-send:hover {
+  color: var(--sk-on-primary);
+  background-color: var(--sk-primary-hover);
+}
+
+/* The composer stays usable while an answer streams, so the button says "working", not "gone". */
+.etskin-on .etskin-cop-send-busy {
+  opacity: 0.5;
+}
+
+/* ---- log */
+
+.etskin-on .etskin-cop-log {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  overflow-y: auto;
+  background-color: var(--sk-canvas-tint);
+}
+
+.etskin-on .etskin-cop-msg {
+  display: flex;
+  flex-direction: column;
+  max-width: 88%;
+}
+
+.etskin-on .etskin-cop-msg-user {
+  align-self: flex-end;
+  align-items: flex-end;
+}
+
+.etskin-on .etskin-cop-bubble {
+  padding: 8px 11px;
+  overflow-wrap: break-word;
+  background-color: var(--sk-surface);
+  border: 1px solid var(--sk-border-hairline);
+  border-radius: var(--sk-radius-lg);
+  box-shadow: var(--sk-shadow-sm);
+}
+
+.etskin-on .etskin-cop-msg-user .etskin-cop-bubble {
+  color: var(--sk-text);
+  background-color: var(--sk-primary-soft);
+  border-color: var(--sk-primary-soft);
+  box-shadow: none;
+}
+
+.etskin-on .etskin-cop-msg-error .etskin-cop-bubble {
+  color: var(--sk-danger);
+  border-color: var(--sk-danger);
+}
+
+.etskin-on .etskin-cop-bubble p {
+  margin: 0 0 6px;
+}
+
+.etskin-on .etskin-cop-bubble p:last-child {
+  margin-bottom: 0;
+}
+
+.etskin-on .etskin-cop-heading {
+  font-weight: 600;
+}
+
+.etskin-on .etskin-cop-list {
+  margin: 0 0 6px;
+  padding-inline-start: 18px;
+}
+
+.etskin-on .etskin-cop-link {
+  color: var(--sk-primary);
+}
+
+.etskin-on .etskin-cop-code {
+  padding: 1px 4px;
+  font-family: ui-monospace, "SFMono-Regular", "Menlo", monospace;
+  font-size: 12px;
+  background-color: var(--sk-field-fill);
+  border-radius: var(--sk-radius-sm);
+}
+
+.etskin-on .etskin-cop-block {
+  margin: 6px 0;
+  overflow: hidden;
+  background-color: var(--sk-field-fill);
+  border: 1px solid var(--sk-border-hairline);
+  border-radius: var(--sk-radius-sm);
+}
+
+.etskin-on .etskin-cop-block-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 3px 6px 3px 8px;
+  font-size: 10px;
+  color: var(--sk-text-faint);
+  background-color: var(--sk-band);
+}
+
+.etskin-on .etskin-cop-block-copy {
+  padding: 1px 6px;
+  font: inherit;
+  font-size: 10px;
+  color: var(--sk-text-muted);
+  cursor: pointer;
+  background-color: transparent;
+  border: 1px solid var(--sk-border);
+  border-radius: var(--sk-radius-sm);
+}
+
+.etskin-on .etskin-cop-block pre {
+  margin: 0;
+  padding: 8px;
+  overflow-x: auto;
+  font-family: ui-monospace, "SFMono-Regular", "Menlo", monospace;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.etskin-on .etskin-cop-status {
+  align-self: flex-start;
+  font-size: 12px;
+  color: var(--sk-text-muted);
+}
+
+.etskin-on .etskin-cop-time {
+  padding: 2px 2px 0;
+  font-size: 10px;
+  color: var(--sk-text-faint);
+}
+
+.etskin-on .etskin-cop-ctx-tag {
+  padding: 0 2px 2px;
+  font-size: 10px;
+  color: var(--sk-primary);
+}
+
+.etskin-on .etskin-cop-msg-files {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding-top: 4px;
+}
+
+.etskin-on .etskin-cop-welcome {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 24px;
+  text-align: center;
+}
+
+.etskin-on .etskin-cop-welcome-mark {
+  width: 34px;
+  height: 34px;
+  margin-bottom: 4px;
+  color: var(--sk-primary);
+  background-color: currentColor;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: 34px 34px;
+  mask-size: 34px 34px;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 5h16v11H8l-4 4z M9 10h.01 M13 10h.01 M17 10h.01'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 5h16v11H8l-4 4z M9 10h.01 M13 10h.01 M17 10h.01'/%3E%3C/svg%3E");
+}
+
+.etskin-on .etskin-cop-welcome-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.etskin-on .etskin-cop-welcome-text {
+  margin: 0;
+  max-width: 30ch;
+  color: var(--sk-text-muted);
+}
+
+/* ---- composer */
+
+.etskin-on .etskin-cop-foot {
+  flex: 0 0 auto;
+  padding: 8px;
+  background-color: var(--sk-surface);
+  border-top: 1px solid var(--sk-border);
+}
+
+.etskin-on .etskin-cop-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding-bottom: 6px;
+}
+
+/*
+ * The context chip is the honest half of the docked panel: the question carries the record the
+ * user was looking at, so the panel says which record, and lets it be taken off.
+ */
+.etskin-on .etskin-cop-ctx,
+.etskin-on .etskin-cop-file-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  padding: 2px 4px 2px 7px;
+  overflow: hidden;
+  font-size: 11px;
+  color: var(--sk-primary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background-color: var(--sk-primary-soft);
+  border-radius: 999px;
+}
+
+.etskin-on .etskin-cop-file-chip {
+  color: var(--sk-text-muted);
+  background-color: var(--sk-neutral-soft);
+}
+
+.etskin-on .etskin-cop-ctx .etskin-cop-icon,
+.etskin-on .etskin-cop-file-chip .etskin-cop-icon {
+  width: 16px;
+  height: 16px;
+  color: inherit;
+}
+
+.etskin-on .etskin-cop-ctx .etskin-cop-icon [class^="etskin-cop-i-"],
+.etskin-on .etskin-cop-file-chip .etskin-cop-icon [class^="etskin-cop-i-"] {
+  width: 10px;
+  height: 10px;
+  -webkit-mask-size: 10px 10px;
+  mask-size: 10px 10px;
+}
+
+.etskin-on .etskin-cop-notice {
+  margin: 0 0 6px;
+  font-size: 11px;
+  color: var(--sk-danger);
+}
+
+.etskin-on .etskin-cop-compose {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  padding: 4px;
+  background-color: var(--sk-field-fill);
+  border: 1px solid var(--sk-border);
+  border-radius: var(--sk-radius);
+}
+
+.etskin-on .etskin-cop-compose:focus-within {
+  background-color: var(--sk-surface);
+  border-color: var(--sk-primary);
+  box-shadow: 0 0 0 3px var(--sk-focus-ring);
+}
+
+.etskin-on .etskin-cop-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 26px;
+  max-height: 160px;
+  padding: 5px 6px;
+  font: inherit;
+  color: var(--sk-text);
+  resize: none;
+  background-color: transparent;
+  border: 0;
+  outline: none;
+}
+
+/* The dialog is opened by the paperclip; the field itself has nothing to show. */
+.etskin-on .etskin-cop-fileinput {
+  display: none;
 }
 
 /* ----------------------------------------------------------- accessibility */
