@@ -130,8 +130,8 @@
     if (preference('SKINLEG_LegacySkin') === 'Y') {
       return false;
     }
-    // Opt-out rather than opt-in: the module ships with ETSKIN_Enabled = Y at system level.
-    return preference('ETSKIN_Enabled') !== 'N';
+    // Opt-in rather than opt-out: the module ships with ETSKIN_Enabled = N at system level.
+    return preference('ETSKIN_Enabled') === 'Y';
   }
 
   // PropertiesComponent parses values that look like JSON into real objects, but falls back to the
